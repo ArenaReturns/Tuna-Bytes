@@ -3,6 +3,9 @@ package io.tunabytes.bytecode.editor;
 import io.tunabytes.Inject.At;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 import lombok.SneakyThrows;
 import org.objectweb.asm.tree.*;
 
@@ -64,16 +67,63 @@ public class InjectionEditor implements MixinsEditor {
                 for (AbstractInsnNode insnNode : targetMethod.instructions) {
                     if (!(insnNode instanceof LineNumberNode)) continue;
                     int currentLine = ((LineNumberNode) insnNode).line;
-                    if (currentLine == line)
+                    if (currentLine == line) {
                         targetMethod.instructions.insertBefore(insnNode, list);
+                        break;
+                    }
                 }
             } else if (at == At.AFTER_LINE) {
                 for (AbstractInsnNode insnNode : targetMethod.instructions) {
                     if (!(insnNode instanceof LineNumberNode)) continue;
                     int currentLine = ((LineNumberNode) insnNode).line;
-                    if (currentLine == line)
+                    if (currentLine == line) {
                         targetMethod.instructions.insert(insnNode, list);
+                        break;
+                    }
                 }
+            } else if (at == At.REPLACE_LINE) {
+                AbstractInsnNode first = null;
+                int injectLineReplaceEnd = method.getInjectLineReplaceEnd();
+
+                List<AbstractInsnNode> toRemoveNodes = new ArrayList<>();
+                for (ListIterator<AbstractInsnNode> iterator = targetMethod.instructions.iterator(); iterator.hasNext();) {
+                    AbstractInsnNode insnNode = iterator.next();
+                    if (!(insnNode instanceof LineNumberNode)) {
+                        continue;
+                    }
+                    first = insnNode;
+
+                    int currentLine = ((LineNumberNode) insnNode).line;
+                    if (currentLine == line) {
+                        while (iterator.hasNext()) {
+                            insnNode = iterator.next();
+                            if (!(insnNode instanceof LineNumberNode)) {
+                                toRemoveNodes.add(insnNode);
+                                continue;
+                            }
+                            currentLine = ((LineNumberNode) insnNode).line;
+                            if (currentLine > injectLineReplaceEnd) {
+                                break;
+                            } else {
+                                toRemoveNodes.add(insnNode);
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                if (toRemoveNodes.get(toRemoveNodes.size() - 1) instanceof LabelNode) {
+                    toRemoveNodes.remove(toRemoveNodes.size() - 1);
+                }
+
+                toRemoveNodes.forEach(a -> targetMethod.instructions.remove(a));
+
+                if (first == null) {
+                    targetMethod.instructions.add(list);
+                } else {
+                    targetMethod.instructions.insert(first, list);
+                }
+
             }
         }
     }

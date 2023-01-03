@@ -18,6 +18,7 @@ public final class MixinMethod {
     private final Type descriptor;
     private final String realDescriptor;
     private final int injectLine;
+    private final int injectLineReplaceEnd;
     private final String injectMethod;
     private final At injectAt;
     private final boolean overwrite, accessor, inject, mirror, definalize, requireTypeRemapping;

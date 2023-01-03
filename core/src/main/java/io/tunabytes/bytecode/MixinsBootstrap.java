@@ -4,7 +4,9 @@ import io.tunabytes.bytecode.editor.*;
 import io.tunabytes.bytecode.introspect.MixinClassVisitor;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.classloader.TunaClassDefiner;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -12,6 +14,8 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * A class for applying changes from mixins to actual classes.
@@ -20,6 +24,9 @@ import java.util.Map.Entry;
  * @see #init()
  */
 public final class MixinsBootstrap {
+
+    public static BiConsumer<String, ClassWriter> mixinedClassHook = (clazzName, mixinedClazzWriter) -> {};
+    public static Function<List<MixinEntry>, List<MixinEntry>> mixingSorterHook = t -> t;
 
     private MixinsBootstrap() { }
 
@@ -60,8 +67,8 @@ public final class MixinsBootstrap {
         editors.add(new InjectionEditor());
         editors.add(new MethodMergerEditor());
         MixinsConfig config = new MixinsConfig();
-        Map<String, TargetedMixin> writers = new HashMap<>();
-        for (MixinEntry mixinEntry : config.getMixinEntries()) {
+        Map<String, TargetedMixin> writers = new LinkedHashMap<>();
+        for (MixinEntry mixinEntry : mixingSorterHook.apply(config.getMixinEntries())) {
             ClassReader reader = mixinEntry.mixinReader();
             MixinClassVisitor visitor = new MixinClassVisitor();
             reader.accept(visitor, ClassReader.SKIP_FRAMES);
@@ -85,6 +92,7 @@ public final class MixinsBootstrap {
         for (Entry<String, TargetedMixin> writerEntry : writers.entrySet()) {
             TargetedMixin mixin = writerEntry.getValue();
             mixin.node.accept(mixin.writer);
+            mixinedClassHook.accept(writerEntry.getKey(), mixin.writer);
             try {
                 TunaClassDefiner.defineClass(
                         writerEntry.getKey(),
@@ -104,8 +112,9 @@ public final class MixinsBootstrap {
         }
     }
 
-    @AllArgsConstructor
-    private static class TargetedMixin {
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    @Getter
+    public static class TargetedMixin {
 
         private final ClassWriter writer;
         private final ClassLoader classLoader;

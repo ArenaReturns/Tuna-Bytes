@@ -27,6 +27,7 @@ public class MixinMethodVisitor extends MethodVisitor {
     protected String injectMethodName;
     protected String accessorName;
     protected int injectLine;
+    protected int injectLineReplaceEnd = -1;
     protected At injectAt;
     protected CallType type = CallType.INVOKE;
 
@@ -79,6 +80,10 @@ public class MixinMethodVisitor extends MethodVisitor {
                         }
                         case "lineNumber": {
                             injectLine = (int) value;
+                            break;
+                        }
+                        case "injectLineReplaceEnd": {
+                            injectLineReplaceEnd = (int) value;
                             break;
                         }
                     }

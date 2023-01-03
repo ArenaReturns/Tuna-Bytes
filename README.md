@@ -1,5 +1,7 @@
-[![](https://jitpack.io/v/ReflxctionDev/Tuna-Bytes.svg)](https://jitpack.io/#ReflxctionDev/Tuna-Bytes)
+[![](https://jitpack.io/v/ArenaReturns/Tuna-Bytes.svg)](https://jitpack.io/#ArenaReturns/Tuna-Bytes)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+### This is a fork of Revxrsal's Tuna Bytes library tweaked for use in Arena Returns wrapper.
 
 # Tuna Bytes
 ![A tuna byte :)](https://i.imgur.com/15VLkMI.jpg)

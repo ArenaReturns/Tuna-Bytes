@@ -6,13 +6,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
 
-final class MixinEntry {
+public final class MixinEntry {
 
     private final String mixinClass;
     private final String targetClass;
     private ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
-    public MixinEntry(String mixinClass, String targetClass) {
+    MixinEntry(String mixinClass, String targetClass) {
         this.mixinClass = mixinClass;
         this.targetClass = targetClass;
     }

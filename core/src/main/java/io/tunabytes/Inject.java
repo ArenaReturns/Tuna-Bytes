@@ -48,6 +48,18 @@ public @interface Inject {
     int lineNumber() default 0;
 
     /**
+     * Used with {@link At#REPLACE_LINE} to specify a range of lines to be replaced
+     *  where the inclusive range is defined by [lineNumber,lineNumberEnd].
+     * <p>
+     * Note: The line number must match the number in the source code. Since
+     * line numbers are preserved into the bytecode as instructions when the class is
+     * compiled, they will be used as a reference point. Binary lines will not work and
+     * most likely going to yield incorrect lines.
+     * @return The last line number to be replaced
+     */
+    int injectLineReplaceEnd() default -1;
+
+    /**
      * Represents an injection point
      */
     enum At {
@@ -79,6 +91,15 @@ public @interface Inject {
          * @see Inject#lineNumber()
          */
         BEFORE_LINE,
+
+        /**
+         * Replace the given line
+         *
+         * @deprecated EXPERIMENTAL make sure to test your bytecode !
+         * @see Inject#lineNumber()
+         */
+        @Deprecated
+        REPLACE_LINE,
 
         /**
          * Injects after the given line in {@link Inject#lineNumber()}.
