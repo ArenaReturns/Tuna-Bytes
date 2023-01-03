@@ -28,6 +28,7 @@ public class MixinMethodVisitor extends MethodVisitor {
     protected String accessorName;
     protected int injectLine;
     protected int injectLineReplaceEnd = -1;
+    protected int lastParameterArgIndex = -1;
     protected At injectAt;
     protected CallType type = CallType.INVOKE;
 
@@ -100,11 +101,24 @@ public class MixinMethodVisitor extends MethodVisitor {
     }
 
     @Override public AnnotationVisitor visitParameterAnnotation(int parameter, String descriptor, boolean visible) {
+//        Important note: <i>a parameter index i
+//   *     is not required to correspond to the i'th parameter descriptor in the method
+//   *     descriptor</i>, in particular in case of synthetic parameters (see
+//   *     https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html#jvms-4.7.18).
+        //FIXME
+        if ("Lio/tunabytes/StackSeparator;".equals(descriptor)) {
+            if (lastParameterArgIndex == -1) {
+                lastParameterArgIndex = parameter;
+            } else {
+                throw new RuntimeException("Double @StackSeparator annotation for method " + injectMethodName);
+            }
+        }
         return new AnnotationVisitor(Opcodes.ASM8, super.visitParameterAnnotation(parameter, descriptor, visible)) {
             @Override public void visit(String name, Object value) {
                 remap = true;
-                if (ACTUAL_TYPE.equals(descriptor))
+                if (ACTUAL_TYPE.equals(descriptor)) {
                     argumentTypes[parameter] = fromActualType(argumentTypes[parameter].getDescriptor(), (String) value);
+                }
                 super.visit(name, value);
             }
         };

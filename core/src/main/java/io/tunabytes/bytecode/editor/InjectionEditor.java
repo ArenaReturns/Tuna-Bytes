@@ -3,14 +3,23 @@ package io.tunabytes.bytecode.editor;
 import io.tunabytes.Inject.At;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
+import lombok.SneakyThrows;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LineNumberNode;
+import org.objectweb.asm.tree.MethodNode;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
-import lombok.SneakyThrows;
-import org.objectweb.asm.tree.*;
-
-import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * A mixins editor for processing {@link io.tunabytes.Inject} methods.
@@ -26,8 +35,28 @@ public class InjectionEditor implements MixinsEditor {
             At at = method.getInjectAt();
             int line = method.getInjectLine();
             String injectIn = method.getInjectMethod();
-            MethodNode targetMethod = classNode.methods.stream().filter(c -> c.name.equals(injectIn))
-                    .findFirst().orElseThrow(() -> new NoSuchMethodException(injectIn));
+            List<MethodNode> collected = classNode.methods.stream()
+                    .filter(c -> c.name.equals(injectIn))
+                    .collect(Collectors.toList());
+            if (collected.size() > 1) {
+                String error = " target(s) found for patch " + info.getMixinName() + "#" + method.getName();
+                System.out.println("[warn]" + collected.size() + error + " narrowing down with descriptor...");
+                Type[] arguments = Type.getArgumentTypes(method.getRealDescriptor());
+                Type returnType = Type.getReturnType(method.getRealDescriptor());
+                Type[] substringArgument = Arrays.copyOf(arguments, method.getLastParameterArgIndex());
+                collected = collected.stream()
+                    .filter(m -> {
+                        String desc = m.desc;
+                        return Type.getReturnType(desc) == returnType &&
+                                Arrays.equals(Type.getArgumentTypes(desc), substringArgument);
+                    }).collect(Collectors.toList());
+                if (collected.size() > 1) {
+                    throw new NoSuchMethodException(error + "\n" + collected.stream().map(methodNode -> "- " + methodNode.desc).collect(Collectors.joining("\n")));
+                }
+            }
+
+            MethodNode targetMethod = collected.get(0);
+
             InsnList list = method.getMethodNode().instructions;
             for (AbstractInsnNode instruction : list) {
                 remapInstruction(classNode, info, instruction);
