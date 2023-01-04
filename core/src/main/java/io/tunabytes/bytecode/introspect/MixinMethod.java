@@ -20,6 +20,7 @@ public final class MixinMethod {
     private final int injectLine;
     private final int injectLineReplaceEnd;
     private final String injectMethod;
+    private final int lastParameterArgIndex;
     private final At injectAt;
     private final boolean overwrite, accessor, inject, mirror, definalize, requireTypeRemapping;
     private final String mirrorName;

@@ -49,6 +49,7 @@ public class MixinClassVisitor extends ClassVisitor {
                         injectLine,
                         injectLineReplaceEnd,
                         injectMethodName,
+                        lastParameterArgIndex,
                         injectAt,
                         overwrite,
                         accessor,
