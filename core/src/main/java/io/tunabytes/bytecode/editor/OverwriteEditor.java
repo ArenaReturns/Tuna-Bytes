@@ -19,6 +19,7 @@ public class OverwriteEditor implements MixinsEditor {
         for (MixinMethod method : info.getMethods()) {
             if (method.isInject()) continue;
             if (method.isMirror()) continue;
+            if (method.getName().equals("<init>")) continue;
             if (method.isOverwrite()) {
                 MethodNode node = method.getMethodNode();
                 if ((node.access & ACC_ABSTRACT) != 0) {

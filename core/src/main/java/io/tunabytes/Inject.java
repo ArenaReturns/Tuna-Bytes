@@ -26,6 +26,21 @@ public @interface Inject {
      */
     String method();
 
+//    /**
+//     * A complete descriptor representation of the method to help
+//     * matching the current method. If not use, the first method with the given
+//     * name will be used
+//     *
+//     * ex:
+//     * target method is <code>void foo()</code> descriptor must be <code>()V</code>
+//     * target method is <code>int[] bar(int i, String s)</code> descriptor must be <code>(ILjava/lang/String;)[I</code>
+//     *
+//     * @link https://asm.ow2.io/asm4-guide.pdf section 2.1.4 for more example
+//     *
+//     * @return
+//     */
+//    String descriptor() default "";
+
     /**
      * Where the injection will occur
      *
@@ -58,6 +73,15 @@ public @interface Inject {
      * @return The last line number to be replaced
      */
     int injectLineReplaceEnd() default -1;
+
+  /**
+   * By default, the last return of the method is not copied from the mixins 
+   *  method to the edited class as it can be implicitly put at the end of 
+   *  the method by the compiler.
+   * If you want to return to be copied set this to 'true'.
+   * @return
+   */
+  boolean keepLastReturn() default false;
 
     /**
      * Represents an injection point

@@ -1,6 +1,13 @@
 package io.tunabytes.bytecode.introspect;
 
-import org.objectweb.asm.*;
+import io.tunabytes.Mixin;
+import lombok.Getter;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -8,15 +15,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MixinClassVisitor extends ClassVisitor {
+    private static final Type MIXIN = Type.getType(Mixin.class);
 
     private final List<MixinField> fields = new ArrayList<>();
     private final List<MixinMethod> methods = new ArrayList<>();
     private boolean isInterface;
+    @Getter
+    private boolean hasMirroredParent;
     private String name;
+
+    @Getter
     private MixinInfo info;
 
     public MixinClassVisitor() {
         super(Opcodes.ASM8);
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+        if (MIXIN.getDescriptor().equals(descriptor)) {
+            return new AnnotationVisitor(Opcodes.ASM8) {
+                @Override
+                public void visit(String name, Object value) {
+                    if ("withFakeParentAccessor".equals(name)) {
+                        hasMirroredParent = (boolean) value;
+                    }
+                }
+            };
+        }
+        return super.visitAnnotation(descriptor, visible);
     }
 
     @Override public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -57,6 +84,7 @@ public class MixinClassVisitor extends ClassVisitor {
                         mirror,
                         definalize,
                         remap,
+                        keepLastReturn,
                         mirrorName == null ? name : mirrorName,
                         overwrittenName == null ? name : overwrittenName,
                         accessorName == null ? getActualName(name) : accessorName,
@@ -68,11 +96,8 @@ public class MixinClassVisitor extends ClassVisitor {
     }
 
     @Override public void visitEnd() {
-        info = new MixinInfo(name, name.replace('.', '/'), isInterface, fields, methods);
+        info = new MixinInfo(name, name.replace('.', '/'),
+                isInterface, hasMirroredParent, fields, methods);
         super.visitEnd();
-    }
-
-    public MixinInfo getInfo() {
-        return info;
     }
 }

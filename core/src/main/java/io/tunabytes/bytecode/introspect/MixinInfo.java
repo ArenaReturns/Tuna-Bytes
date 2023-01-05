@@ -12,7 +12,7 @@ import java.util.List;
 public class MixinInfo {
 
     private final String mixinName, mixinInternalName;
-    private final boolean mixinInterface;
+    private final boolean mixinInterface, mirrorParent;
     private final List<MixinField> fields;
     private final List<MixinMethod> methods;
 
