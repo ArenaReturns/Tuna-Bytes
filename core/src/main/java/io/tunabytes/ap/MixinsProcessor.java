@@ -8,6 +8,7 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
@@ -40,18 +41,19 @@ public class MixinsProcessor extends AbstractProcessor {
             TypeElement type = (TypeElement) element;
             Mixin mixin = type.getAnnotation(Mixin.class);
             String packageName = "";
+            Name fullQualifiedName = processingEnv.getElementUtils().getBinaryName(type);
             try {
                 if (!mixin.name().isEmpty()) {
                     packageName = mixin.name().substring(0, mixin.name().lastIndexOf('.'));
-                    mixins.add(type.getQualifiedName().toString() + "=" + mixin.name());
+                    mixins.add(fullQualifiedName + "=" + mixin.name());
                 } else {
                     mixin.value();
                 }
             } catch (MirroredTypeException e) {
                 if (mixin.name().isEmpty() && e.getTypeMirror().toString().equals("java.lang.Object")) {
-                    throw new IllegalStateException("@Mixin on " + type.getQualifiedName() + " does not specify a class name() or Class<?> value()");
+                    throw new IllegalStateException("@Mixin on " + fullQualifiedName + " does not specify a class name() or Class<?> value()");
                 }
-                mixins.add(type.getQualifiedName().toString() + "=" + e.getTypeMirror());
+                mixins.add(fullQualifiedName + "=" + e.getTypeMirror());
                 PackageElement packageElement = (PackageElement) asTypeElement(e.getTypeMirror()).getEnclosingElement();
                 packageName = packageElement.toString();
             }

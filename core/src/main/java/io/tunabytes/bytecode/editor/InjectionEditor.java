@@ -1,6 +1,7 @@
 package io.tunabytes.bytecode.editor;
 
 import io.tunabytes.Inject.At;
+import io.tunabytes.bytecode.InvalidMixinException;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
 import lombok.SneakyThrows;
@@ -38,21 +39,36 @@ public class InjectionEditor implements MixinsEditor {
             List<MethodNode> collected = classNode.methods.stream()
                     .filter(c -> c.name.equals(injectIn))
                     .collect(Collectors.toList());
+            String error = " target method(s) found for mixin:\n\t" + info.getMixinName() + "#" + method.getInjectMethod() + "(...)\n\t\tpatching =>\n\t" +
+                    classNode.name.replace("/", ".") + "#";
+            String targetMethodDescriptor = injectIn + "(...)";
+            String tip = "";
             if (collected.size() > 1) {
-                String error = " target(s) found for patch " + info.getMixinName() + "#" + method.getName();
-                System.out.println("[warn]" + collected.size() + error + " narrowing down with descriptor...");
                 Type[] arguments = Type.getArgumentTypes(method.getRealDescriptor());
-                Type returnType = Type.getReturnType(method.getRealDescriptor());
-                Type[] substringArgument = Arrays.copyOf(arguments, method.getLastParameterArgIndex());
+                Type[] substringArgument = Arrays.copyOf(arguments, Math.min(method.getLastParameterArgIndex(), arguments.length));
+                String argumentsStr = Arrays.stream(substringArgument).map(Type::toString).collect(Collectors.joining());
+                targetMethodDescriptor = injectIn + "(" + argumentsStr + ")";
+                System.out.println("[info] " + collected.size() + error + targetMethodDescriptor +"\n\tTrying to narrowing it down with descriptor: "
+                        + targetMethodDescriptor);
+
                 collected = collected.stream()
                     .filter(m -> {
                         String desc = m.desc;
-                        return Type.getReturnType(desc) == returnType &&
-                                Arrays.equals(Type.getArgumentTypes(desc), substringArgument);
+                        return Arrays.equals(Type.getArgumentTypes(desc), substringArgument);
                     }).collect(Collectors.toList());
-                if (collected.size() > 1) {
-                    throw new NoSuchMethodException(error + "\n" + collected.stream().map(methodNode -> "- " + methodNode.desc).collect(Collectors.joining("\n")));
+                if (method.getLastParameterArgIndex() == Integer.MAX_VALUE) {
+                    tip = "\n\t Did you forget a @StackSeparator ? \n";
                 }
+            }
+
+            if (collected.size() > 1) {
+                throw new InvalidMixinException("Too much matches !\n" + collected.size() + error + targetMethodDescriptor
+                        + "\n" + collected.stream().map(methodNode -> "- " + methodNode.desc)
+                        .collect(Collectors.joining("\n")) + tip);
+            }
+
+            if (collected.isEmpty()) {
+                throw new InvalidMixinException("No" + error + targetMethodDescriptor + tip);
             }
 
             MethodNode targetMethod = collected.get(0);
@@ -71,7 +87,9 @@ public class InjectionEditor implements MixinsEditor {
                 }
             }
 
-            if (lastInjectedReturn != null) list.remove(lastInjectedReturn);
+            if (! method.isKeepLastReturn()) {
+                if (lastInjectedReturn != null) list.remove(lastInjectedReturn);
+            }
 
             if (at == At.BEGINNING) {
                 AbstractInsnNode first = targetMethod.instructions.getFirst();

@@ -2,6 +2,7 @@ package io.tunabytes.bytecode.introspect;
 
 import io.tunabytes.*;
 import io.tunabytes.Inject.At;
+import io.tunabytes.bytecode.InvalidMixinException;
 import io.tunabytes.bytecode.introspect.MixinMethod.CallType;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -22,13 +23,13 @@ public class MixinMethodVisitor extends MethodVisitor {
     protected String mirrorName;
     protected Type returnType;
     protected Type[] argumentTypes;
-    protected boolean overwrite, inject, accessor, mirror, definalize, remap;
+    protected boolean overwrite, inject, accessor, mirror, definalize, remap, keepLastReturn;
     protected String overwrittenName;
     protected String injectMethodName;
     protected String accessorName;
     protected int injectLine;
     protected int injectLineReplaceEnd = -1;
-    protected int lastParameterArgIndex = -1;
+    protected int lastParameterArgIndex = Integer.MAX_VALUE;
     protected At injectAt;
     protected CallType type = CallType.INVOKE;
 
@@ -83,6 +84,10 @@ public class MixinMethodVisitor extends MethodVisitor {
                             injectLine = (int) value;
                             break;
                         }
+                        case "keepLastReturn": {
+                            keepLastReturn = (boolean) value;
+                            break;
+                        }
                         case "injectLineReplaceEnd": {
                             injectLineReplaceEnd = (int) value;
                             break;
@@ -107,10 +112,10 @@ public class MixinMethodVisitor extends MethodVisitor {
 //   *     https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html#jvms-4.7.18).
         //FIXME
         if ("Lio/tunabytes/StackSeparator;".equals(descriptor)) {
-            if (lastParameterArgIndex == -1) {
+            if (lastParameterArgIndex == Integer.MAX_VALUE) {
                 lastParameterArgIndex = parameter;
             } else {
-                throw new RuntimeException("Double @StackSeparator annotation for method " + injectMethodName);
+                throw new InvalidMixinException("Double @StackSeparator annotation for method " + injectMethodName);
             }
         }
         return new AnnotationVisitor(Opcodes.ASM8, super.visitParameterAnnotation(parameter, descriptor, visible)) {

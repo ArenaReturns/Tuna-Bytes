@@ -25,26 +25,23 @@ public final class MixinEntry {
         return targetClass;
     }
 
-    public ClassReader mixinReader() {
-        try (InputStream stream = getClass().getClassLoader().getResourceAsStream(mixinClass.replace('.', '/') + ".class")) {
-            if (stream != null) {
-                return new ClassReader(stream);
-            }
-            throw new IllegalStateException("Class not found: " + mixinClass + ". Make sure you specify any additional classloaders in MixinsBootstrap.init(...)!");
-        } catch (IOException e) {
-            throw new ReadClassException(mixinClass, e);
-        }
+    public ClassReader mixinReader(Set<ClassLoader> classLoaders) {
+        return getClassReader(classLoaders, mixinClass);
     }
 
     public ClassReader targetReader(Set<ClassLoader> classLoaders) {
+        return getClassReader(classLoaders, targetClass);
+    }
+
+    private ClassReader getClassReader(Set<ClassLoader> classLoaders, String clazz) {
         for (ClassLoader loader : classLoaders) {
-            try (InputStream stream = loader.getResourceAsStream(targetClass.replace('.', '/') + ".class")) {
+            try (InputStream stream = loader.getResourceAsStream(clazz.replace('.', '/') + ".class")) {
                 if (stream != null) {
                     classLoader = loader;
                     return new ClassReader(stream);
                 }
             } catch (IOException e) {
-                throw new ReadClassException(targetClass, e);
+                throw new ReadClassException(clazz, e);
             }
         }
         throw new IllegalStateException("Class not found: " + targetClass + ". Make sure you specify any additional classloaders in MixinsBootstrap.init(...)!");

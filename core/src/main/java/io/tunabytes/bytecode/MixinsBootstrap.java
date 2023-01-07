@@ -66,10 +66,10 @@ public final class MixinsBootstrap {
         editors.add(new AccessorEditor());
         editors.add(new InjectionEditor());
         editors.add(new MethodMergerEditor());
-        MixinsConfig config = new MixinsConfig();
+        MixinsConfig config = new MixinsConfig(classLoaders);
         Map<String, TargetedMixin> writers = new LinkedHashMap<>();
         for (MixinEntry mixinEntry : mixingSorterHook.apply(config.getMixinEntries())) {
-            ClassReader reader = mixinEntry.mixinReader();
+            ClassReader reader = mixinEntry.mixinReader(classLoaders);
             MixinClassVisitor visitor = new MixinClassVisitor();
             reader.accept(visitor, ClassReader.SKIP_FRAMES);
             MixinInfo info = visitor.getInfo();

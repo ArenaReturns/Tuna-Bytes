@@ -39,4 +39,29 @@ public @interface Mixin {
      * @return The name of the class
      */
     String name() default "";
+
+  /**
+   * Tell if the parent of the mixin is just a placeholder
+   *  use for compiling the mixin.
+   * It is generally a bad idea to make a mixin extend a class
+   *  if you want this class to have some mixins as well, the
+   *  hierarchical linking will mess with the classes load order.
+   * If you just want to use the super keyword in your mixin code, set this to true.
+   *  The calls to the parent class will be remapped to the parent of the target class of the mixin.
+   * 
+   * You can alternatively use a mixin like this if your field/method from the parent class is public :
+   * <pre>
+   *    @Mixin(Child.class)
+   *    public abstract class OverridenChildMixin {
+   *
+   *    @Overwrite("foo")
+   *    public void foo() {
+   *      Parent parent = (Parent) (Object) this;
+   *      parent.foo()
+   *    }
+   * </pre>
+   * 
+   * @return Whether the parent of the mixin is a placeholder for mixin compilation.
+   */
+  boolean withFakeParentAccessor() default false;
 }

@@ -22,7 +22,7 @@ public final class MixinMethod {
     private final String injectMethod;
     private final int lastParameterArgIndex;
     private final At injectAt;
-    private final boolean overwrite, accessor, inject, mirror, definalize, requireTypeRemapping;
+    private final boolean overwrite, accessor, inject, mirror, definalize, requireTypeRemapping, keepLastReturn;
     private final String mirrorName;
     private final String overwrittenName; // or accessed method
     private final String accessedProperty; // or accessed method

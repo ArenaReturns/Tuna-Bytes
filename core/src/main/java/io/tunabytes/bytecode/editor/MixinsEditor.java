@@ -60,6 +60,9 @@ public interface MixinsEditor extends Opcodes {
                 insn.setOpcode(INVOKEVIRTUAL);
                 insn.itf = false;
             }
+            if (info.isMirrorParent() && insn.getOpcode() == INVOKESPECIAL) {
+                insn.owner = classNode.superName;
+            }
             if (insn.owner.equals(info.getMixinInternalName())) {
                 insn.owner = classNode.name;
                 info.getMethods().stream()
