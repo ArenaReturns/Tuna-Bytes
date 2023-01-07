@@ -17,8 +17,8 @@
     <version>1.0-SNAPSHOT</version>
 
     <modules>
-        <module>fishingground</module>
-        <module>mixintank</module>
+        <module>fishing-ground</module>
+        <module>mixins-tank</module>
     </modules>
 
     <properties>
