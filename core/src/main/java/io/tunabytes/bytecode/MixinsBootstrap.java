@@ -63,6 +63,7 @@ public final class MixinsBootstrap {
         List<MixinsEditor> editors = new ArrayList<>();
         editors.add(new DefinalizeEditor());
         editors.add(new OverwriteEditor());
+        editors.add(new RewriteEditor());
         editors.add(new AccessorEditor());
         editors.add(new InjectionEditor());
         editors.add(new MethodMergerEditor());

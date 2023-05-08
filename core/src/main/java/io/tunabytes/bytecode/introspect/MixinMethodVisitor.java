@@ -2,6 +2,7 @@ package io.tunabytes.bytecode.introspect;
 
 import io.tunabytes.*;
 import io.tunabytes.Inject.At;
+import io.tunabytes.Rewrite.Rewritter;
 import io.tunabytes.bytecode.InvalidMixinException;
 import io.tunabytes.bytecode.introspect.MixinMethod.CallType;
 import org.objectweb.asm.AnnotationVisitor;
@@ -12,20 +13,23 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class MixinMethodVisitor extends MethodVisitor {
 
-    private static final String OVERWRITE = Type.getDescriptor(Overwrite.class);
+  private static final String OVERWRITE = Type.getDescriptor(Overwrite.class);
     private static final String INJECT = Type.getDescriptor(Inject.class);
     private static final String ACCESSOR = Type.getDescriptor(Accessor.class);
+    private static final String REWRITE = Type.getDescriptor(Rewrite.class);
     private static final String MIRROR = Type.getDescriptor(Mirror.class);
     private static final String DEFINALIZE = Type.getDescriptor(Definalize.class);
     private static final String ACTUAL_TYPE = Type.getDescriptor(ActualType.class);
+  public static final String STACK_SEPARATOR_DESC = "Lio/tunabytes/StackSeparator;";
 
     protected MethodNode node;
     protected String mirrorName;
     protected Type returnType;
     protected Type[] argumentTypes;
-    protected boolean overwrite, inject, accessor, mirror, definalize, remap, keepLastReturn;
+    protected boolean overwrite, inject, accessor, mirror, definalize, remap, keepLastReturn, rewrite;
     protected String overwrittenName;
     protected String injectMethodName;
+    protected Class<? extends Rewritter> runtimeRewriter;
     protected String accessorName;
     protected int injectLine;
     protected int injectLineReplaceEnd = -1;
@@ -42,11 +46,14 @@ public class MixinMethodVisitor extends MethodVisitor {
     }
 
     @Override public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+        boolean visitingRewrite = REWRITE.equals(descriptor);
         boolean visitingAccessor = ACCESSOR.equals(descriptor);
         boolean visitingOverwrite = OVERWRITE.equals(descriptor);
         boolean visitingInject = INJECT.equals(descriptor);
         boolean visitingMirror = MIRROR.equals(descriptor);
         boolean visitingActualType = ACTUAL_TYPE.equals(descriptor);
+        if (visitingRewrite)
+            rewrite = true;
         if (visitingOverwrite)
             overwrite = true;
         if (visitingInject)
@@ -63,8 +70,11 @@ public class MixinMethodVisitor extends MethodVisitor {
                 if (visitingAccessor && name.equals("value")) {
                     accessorName = (String) value;
                 }
-                if (visitingOverwrite && name.equals("value")) {
+                if ((visitingRewrite || visitingOverwrite) && name.equals("value")) {
                     overwrittenName = (String) value;
+                }
+                if (visitingRewrite && name.equals("runtimeRewriter")) {
+                    runtimeRewriter = (Class<? extends Rewritter>) getClassForInternalName(((Type) value).getInternalName());
                 }
                 if (visitingMirror && name.equals("value")) {
                     mirrorName = (String) value;
@@ -111,7 +121,7 @@ public class MixinMethodVisitor extends MethodVisitor {
 //   *     descriptor</i>, in particular in case of synthetic parameters (see
 //   *     https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html#jvms-4.7.18).
         //FIXME
-        if ("Lio/tunabytes/StackSeparator;".equals(descriptor)) {
+        if (STACK_SEPARATOR_DESC.equals(descriptor)) {
             if (lastParameterArgIndex == Integer.MAX_VALUE) {
                 lastParameterArgIndex = parameter;
             } else {
@@ -166,5 +176,20 @@ public class MixinMethodVisitor extends MethodVisitor {
             arrayAddition = descriptor.substring(0, descriptor.lastIndexOf('[') + 1);
         return Type.getType(arrayAddition + "L" + actualType.replace('.', '/') + ";");
     }
+    
+    public static Class<?> getClassForInternalName(String classDesc) {
+      String className = classDesc.replace('/', '.');
+      try {
+        return MixinMethodVisitor.class.getClassLoader().loadClass(className);
+      } catch (ClassNotFoundException e) {
+        // If class not found trying the context classLoader
+        try {
+          return Thread.currentThread().getContextClassLoader().loadClass(className);
+        } catch (ClassNotFoundException e2) {
+          throw new RuntimeException("Error loading class '" + className + "' for rule method analysis", e2);
+        }
+      }
+    }
+    
 
 }

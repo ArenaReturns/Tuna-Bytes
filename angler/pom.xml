@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.tunabytes</groupId>
         <artifactId>tuna-bytes</artifactId>
-        <version>1.4.0</version>
+        <version>1.5.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -46,7 +46,7 @@
             <dependency>
                 <artifactId>java8</artifactId>
                 <groupId>io.tunabytes</groupId>
-                <version>1.4.0</version>
+                <version>1.5.0-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
