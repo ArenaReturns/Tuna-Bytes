@@ -152,4 +152,16 @@ public class SimpleMixinTests {
         }
     }
 
+    // BEGIN Rewrite
+
+  @Test
+  public void test_rewrite_noop() throws IOException {
+    URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("NoopRewrite.java"));
+    launchMixins(cl);
+    assertNumberOfClassesMixified(1);
+    SimplePOJO simplePOJO = new SimplePOJO();
+    simplePOJO.getState().addObserver((origin, v) -> Assert.fail("Should have been rewritten !"));
+    simplePOJO.noopMethodWithInternalStateChangeCall();
+  }
+  //END Rewrite
 }

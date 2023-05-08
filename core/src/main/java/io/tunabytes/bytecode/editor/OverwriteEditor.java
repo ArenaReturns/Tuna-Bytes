@@ -29,6 +29,8 @@ public class OverwriteEditor implements MixinsEditor {
                         .findFirst().orElseThrow(() -> new NoSuchMethodException(method.getOverwrittenName()));
                 underlying.instructions = new InsnList();
                 underlying.instructions.add(node.instructions);
+                underlying.tryCatchBlocks = node.tryCatchBlocks;
+
                 for (AbstractInsnNode instruction : underlying.instructions) {
                     remapInstruction(classNode, info, instruction);
                 }

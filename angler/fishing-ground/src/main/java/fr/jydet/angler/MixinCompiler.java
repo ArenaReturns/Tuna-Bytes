@@ -1,7 +1,6 @@
 package fr.jydet.angler;
 
 import com.google.testing.compile.Compilation;
-import com.google.testing.compile.CompilationSubject;
 import com.google.testing.compile.JavaFileObjects;
 import io.tunabytes.ap.MixinsProcessor;
 import org.apache.commons.io.FileUtils;
@@ -25,11 +24,11 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 
 public class MixinCompiler {
-
     public static final String COMPILED_OUT_DIR = "CLASS_OUTPUT";
-
     private static File getFileFromMixinsTank(String className) throws FileNotFoundException {
-        return FileUtils.listFiles(new File("../mixintank/src/"), new String[]{"java"}, true)
+      File directory = new File("../mixins-tank/src/");
+      if (! directory.exists()) directory = new File("Angler/mixins-tank/src/");
+      return FileUtils.listFiles(directory, new String[]{"java"}, true)
                 .stream()
                 .filter(File::isFile)
                 .filter(f -> f.getName().equals(className))

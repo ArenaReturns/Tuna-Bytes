@@ -63,6 +63,7 @@ public final class MixinsBootstrap {
         List<MixinsEditor> editors = new ArrayList<>();
         editors.add(new DefinalizeEditor());
         editors.add(new OverwriteEditor());
+        editors.add(new RewriteEditor());
         editors.add(new AccessorEditor());
         editors.add(new InjectionEditor());
         editors.add(new MethodMergerEditor());
@@ -91,9 +92,9 @@ public final class MixinsBootstrap {
         }
         for (Entry<String, TargetedMixin> writerEntry : writers.entrySet()) {
             TargetedMixin mixin = writerEntry.getValue();
-            mixin.node.accept(mixin.writer);
-            mixinedClassHook.accept(writerEntry.getKey(), mixin.writer);
             try {
+                mixin.node.accept(mixin.writer);
+                mixinedClassHook.accept(writerEntry.getKey(), mixin.writer);
                 TunaClassDefiner.defineClass(
                         writerEntry.getKey(),
                         mixin.writer.toByteArray(),
@@ -103,7 +104,8 @@ public final class MixinsBootstrap {
                 );
             } catch (Throwable throwable) {
                 if (!ignoreLoadedClasses) {
-                    if (throwable.getClass() == LinkageError.class || Objects.equals(throwable.getCause().getClass(), LinkageError.class)) {
+                    if (throwable.getClass() == LinkageError.class ||
+                            (throwable.getCause() != null && Objects.equals(throwable.getCause().getClass(), LinkageError.class))) {
                         throw new IllegalStateException("Class " + writerEntry.getKey() + " has already been loaded.");
                     }
                     throw new IllegalStateException("Unable to load mixin modifications for class " + writerEntry.getKey(), throwable);

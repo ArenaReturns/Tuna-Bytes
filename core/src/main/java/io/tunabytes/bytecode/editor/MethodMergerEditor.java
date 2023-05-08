@@ -44,7 +44,7 @@ public class MethodMergerEditor implements MixinsEditor {
                 }
                 continue;
             }
-            if (method.isOverwrite()) continue;
+            if (method.isOverwrite() || method.isRewrite()) continue;
             if (info.isMixinInterface() && (method.getMethodNode().access & ACC_ABSTRACT) != 0) continue;
             MethodNode mn = method.getMethodNode();
             MethodNode underlying = new MethodNode(mn.access, mn.name, mn.desc, mn.signature, mn.exceptions.toArray(new String[0]));
