@@ -74,6 +74,16 @@ public class MirrorFieldsMixinTests {
     }
 
     @Test
+    public void test_mirrorIsFinalField() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("ErrorMirrorFinalMixin.java"));
+        launchMixins(cl);
+        try {
+            new SimplePOJO().noopMethod();
+            Assert.fail("Mixin should make this class crash !");
+        } catch (IllegalStateException expected) { }
+    }
+
+    @Test
     public void test_mirrorParentInternalField() throws IOException {
         URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("MirrorParentFieldMixin.java"));
         launchMixins(cl);

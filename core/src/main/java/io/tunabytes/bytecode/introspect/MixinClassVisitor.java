@@ -58,6 +58,9 @@ public class MixinClassVisitor extends ClassVisitor {
             @Override public void visitEnd() {
                 FieldNode node = (FieldNode) fv;
                 node.desc = desc;
+                if ((access & Opcodes.ACC_FINAL) != 0 && mirror) {
+                    throw new IllegalStateException("Field '" + descriptor + " " + fname + "' in class '" + MixinClassVisitor.this.name + "' must not be static if it has @Mirror !");
+                }
                 fields.add(new MixinField(access, mirror, definalize, name == null ? fname : name, desc, remapped, descriptor, (FieldNode) fv));
             }
         };
