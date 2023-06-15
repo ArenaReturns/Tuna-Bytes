@@ -12,16 +12,19 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MixinClassVisitor extends ClassVisitor {
     private static final Type MIXIN = Type.getType(Mixin.class);
 
     private final List<MixinField> fields = new ArrayList<>();
     private final List<MixinMethod> methods = new ArrayList<>();
-    private boolean isInterface;
+    private boolean isInterface, isEnum;
     @Getter
     private boolean hasMirroredParent;
+    protected Set<String> deletedEnumValues = new HashSet<>();
     private String name;
 
     @Getter
@@ -39,6 +42,16 @@ public class MixinClassVisitor extends ClassVisitor {
                 public void visit(String name, Object value) {
                     if ("withFakeParentAccessor".equals(name)) {
                         hasMirroredParent = (boolean) value;
+                    } else if ("enumTarget".equals(name)) {
+                        isEnum = (boolean) value;
+                    } else if ("deletedEnumConstants".equals(name)) {
+                        String[] deletedEnumConstants = (String[]) value;
+                        for (String deletedEnumConstant : deletedEnumConstants) {
+                            String trimmedValue = deletedEnumConstant.trim();
+                            if (! trimmedValue.isEmpty()) {
+                                deletedEnumValues.add(trimmedValue);
+                            }
+                        }
                     }
                 }
             };
@@ -61,7 +74,7 @@ public class MixinClassVisitor extends ClassVisitor {
                 if ((access & Opcodes.ACC_FINAL) != 0 && mirror) {
                     throw new IllegalStateException("Field '" + descriptor + " " + fname + "' in class '" + MixinClassVisitor.this.name + "' must not be static if it has @Mirror !");
                 }
-                fields.add(new MixinField(access, mirror, definalize, name == null ? fname : name, desc, remapped, descriptor, (FieldNode) fv));
+                fields.add(new MixinField(access, mirror, definalize, name == null ? fname : name, desc, remapped, enumField, descriptor, (FieldNode) fv));
             }
         };
     }
@@ -102,7 +115,7 @@ public class MixinClassVisitor extends ClassVisitor {
 
     @Override public void visitEnd() {
         info = new MixinInfo(name, name.replace('.', '/'),
-                isInterface, hasMirroredParent, fields, methods);
+                isInterface, isEnum, hasMirroredParent, fields, methods, deletedEnumValues);
         super.visitEnd();
     }
 }

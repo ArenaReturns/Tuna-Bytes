@@ -5,43 +5,31 @@ import io.tunabytes.bytecode.introspect.MixinMethod;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * A mixins editor for copying methods from the mixins class to the target class.
  */
 public class MethodMergerEditor implements MixinsEditor {
+
+    private static final Set<String> IGNORED_ENUM_METHODS = new HashSet<>(Arrays.asList("values", "valueOf", "<init>", "<clinit>"));
 
     @Override public void edit(ClassNode classNode, MixinInfo info) {
         for (MixinMethod method : info.getMethods()) {
             if (method.isAccessor()) continue;
             if (method.isInject()) continue;
             if (method.isMirror()) continue;
-            // inject no-args constructors into each constructor of the mixed class
-            if (method.getName().equals("<init>")) {
-                if (! method.isOverwrite()) continue;
-                if (method.getDescriptor().getArgumentTypes().length == 0) {
-                    InsnList list = method.getMethodNode().instructions;
-                    for (AbstractInsnNode node : list) {
-                        if (node instanceof LineNumberNode || RETURN_OPCODES.contains(node.getOpcode())) {
-                            list.remove(node);
-                        } else if (node.getOpcode() == Opcodes.INVOKESPECIAL) {
-                            MethodInsnNode nm = (MethodInsnNode) node;
-                            if (nm.name.equals("<init>") && nm.owner.equals("java/lang/Object")) {
-                                list.remove(nm);
-                            }
-                        } else {
-                            remapInstruction(classNode, info, node);
-                        }
-                    }
-                    for (MethodNode c : classNode.methods) {
-                        if (c.name.equals("<init>")) {
-                            AbstractInsnNode lastReturn = null;
-                            for (AbstractInsnNode n : c.instructions) {
-                                if (RETURN_OPCODES.contains(n.getOpcode())) lastReturn = n;
-                            }
-                            c.instructions.insertBefore(lastReturn, InjectionEditor.cloneInsnList(list));
-                        }
-                    }
+            if (info.isMixinEnum()) {
+                if (IGNORED_ENUM_METHODS.contains(method.getName())) {
+                    continue;
                 }
+            }
+            //merge static initializer
+            // inject no-args constructors into each constructor of the mixed class
+            if (method.getName().equals("<init>") || method.getName().equals("<clinit>")) {
+                merge(classNode, info, method, method.getName());
                 continue;
             }
             if (method.isOverwrite() || method.isRewrite()) continue;
@@ -54,6 +42,38 @@ public class MethodMergerEditor implements MixinsEditor {
                 remapInstruction(classNode, info, instruction);
             }
             classNode.methods.add(underlying);
+        }
+    }
+
+    private void merge(ClassNode classNode, MixinInfo info, MixinMethod method, String methodName) {
+        if (! method.isOverwrite()) return;
+        if (method.getDescriptor().getArgumentTypes().length == 0) {
+            InsnList mixinInstructionList = method.getMethodNode().instructions;
+            for (AbstractInsnNode node : mixinInstructionList) {
+                if (node instanceof LineNumberNode || RETURN_OPCODES.contains(node.getOpcode())) {
+                    mixinInstructionList.remove(node);
+                } else if (node.getOpcode() == Opcodes.INVOKESPECIAL) {
+                    MethodInsnNode nm = (MethodInsnNode) node;
+
+                    //FIXME tester ca
+                    if (nm.name.equals(methodName) && nm.owner.equals("java/lang/Object")) {//remove super() to Object ?
+                        mixinInstructionList.remove(nm);
+                    } else {
+                        remapInstruction(classNode, info, node);
+                    }
+                } else {
+                    remapInstruction(classNode, info, node);
+                }
+            }
+            for (MethodNode targetMethodNode : classNode.methods) {
+                if (targetMethodNode.name.equals(methodName)) {
+                    AbstractInsnNode lastReturn = null;
+                    for (AbstractInsnNode n : targetMethodNode.instructions) {
+                        if (RETURN_OPCODES.contains(n.getOpcode())) lastReturn = n;
+                    }
+                    targetMethodNode.instructions.insertBefore(lastReturn, InjectionEditor.cloneInsnList(mixinInstructionList));
+                }
+            }
         }
     }
 }

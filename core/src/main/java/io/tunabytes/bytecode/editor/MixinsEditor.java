@@ -4,10 +4,7 @@ import io.tunabytes.bytecode.introspect.MixinField;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -47,11 +44,16 @@ public interface MixinsEditor extends Opcodes {
             FieldInsnNode insn = (FieldInsnNode) instruction;
             if (insn.owner.equals(info.getMixinInternalName())) {
                 insn.owner = classNode.name;
-                info.getFields().stream()
-                        .filter(MixinField::isRemapped)
-                        .filter(c -> c.getType().equals(insn.desc))
-                        .findFirst()
-                        .ifPresent(field -> insn.desc = field.getDesc());
+                String mixinNameArray = "L" + info.getMixinInternalName() + ";";
+                if (info.isMixinEnum() && insn.desc.equals(mixinNameArray)) {
+                    insn.desc = "L" + insn.owner + ";";
+                } else {
+                    info.getFields().stream()
+                            .filter(MixinField::isRemapped)
+                            .filter(c -> c.getType().equals(insn.desc))
+                            .findFirst()
+                            .ifPresent(field -> insn.desc = field.getDesc());
+                }
             }
         }
         if (instruction instanceof MethodInsnNode) {
@@ -70,6 +72,12 @@ public interface MixinsEditor extends Opcodes {
                         .filter(c -> c.getRealDescriptor().equals(insn.desc))
                         .findFirst()
                         .ifPresent(method -> insn.desc = method.getDescriptor().getDescriptor());
+            }
+        }
+        if (instruction instanceof TypeInsnNode) {
+            TypeInsnNode typeInsnNode = (TypeInsnNode) instruction;
+            if (typeInsnNode.desc.equals(info.getMixinInternalName())) {
+                typeInsnNode.desc = classNode.name;
             }
         }
     }

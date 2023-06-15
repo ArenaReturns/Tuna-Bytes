@@ -40,6 +40,8 @@ public @interface Mixin {
      */
     String name() default "";
 
+    boolean enumTarget() default false;
+
   /**
    * Tell if the parent of the mixin is just a placeholder
    *  use for compiling the mixin.

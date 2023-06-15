@@ -6,12 +6,15 @@ import io.tunabytes.bytecode.introspect.MixinMethod;
 import lombok.SneakyThrows;
 import org.objectweb.asm.tree.*;
 
+import java.util.Iterator;
+
 /**
  * A mixins editor for processing {@link io.tunabytes.Overwrite} methods.
  */
 public class OverwriteEditor implements MixinsEditor {
 
     @SneakyThrows @Override public void edit(ClassNode classNode, MixinInfo info) {
+        if (info.isMixinEnum()) return;
         for (MixinField field : info.getFields()) {
             if (field.isMirror()) continue;
             classNode.fields.add(field.getNode());
