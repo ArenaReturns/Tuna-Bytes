@@ -169,7 +169,13 @@ public class EnumEditor implements MixinsEditor {
 
                 targetClinitInstructions.insert(previous, mixinClinit.instructions);
 
-                generateValuesCreation(targetClinit, node.name, new ArrayList<>(enumsValues.keySet()));
+                generateValuesCreation(targetClinit, node.name, new ArrayList<>(enumsValues.keySet()),
+                        node.fields.stream()
+                                .filter(fieldNode -> (fieldNode.access & Opcodes.ACC_SYNTHETIC) == Opcodes.ACC_SYNTHETIC)
+                                .map(fieldNode -> fieldNode.name)
+                                .filter(name -> name.contains("$"))
+                                .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("No synthetic field found for enum " + node.name + "! Are you sure this is an enum ??")));
 
                 for (AbstractInsnNode instruction : targetClinit.instructions) {
                     remapInstruction(node, info, instruction);
@@ -183,7 +189,7 @@ public class EnumEditor implements MixinsEditor {
         }
     }
 
-    private void generateValuesCreation(MethodVisitor mv, String parentName, List<String> enums) {
+    private void generateValuesCreation(MethodVisitor mv, String parentName, List<String> enums, String synteticValuesFieldName) {
         //$Values size
         addIntToStack(mv, enums.size());
         mv.visitTypeInsn(Opcodes.ANEWARRAY, parentName);
@@ -195,7 +201,7 @@ public class EnumEditor implements MixinsEditor {
             mv.visitFieldInsn(Opcodes.GETSTATIC, parentName, enumValue, "L" + parentName + ";");
             mv.visitInsn(Opcodes.AASTORE);
         }
-        mv.visitFieldInsn(PUTSTATIC, parentName, "$VALUES", "[L" + parentName + ";");
+        mv.visitFieldInsn(PUTSTATIC, parentName, synteticValuesFieldName, "[L" + parentName + ";");
         mv.visitInsn(Opcodes.RETURN);
     }
 
@@ -226,7 +232,7 @@ public class EnumEditor implements MixinsEditor {
                 break;
             }
             default: {
-                mv.visitIntInsn(Opcodes.BIPUSH, 6);
+                mv.visitIntInsn(Opcodes.BIPUSH, value);
             }
         }
     }
