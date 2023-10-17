@@ -38,6 +38,26 @@ public class SimpleMixinTests {
     }
 
     @Test
+    public void test_injectBeginning_inEmptyMethod_withImplicitName() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("SimpleInjectionBeginningImplicit.java"));
+        launchMixins(cl);
+        assertNumberOfClassesMixified(1);
+        Assert.assertFalse(State.success);
+        new SimplePOJO().noopMethod();
+        Assert.assertTrue(State.success);
+    }
+
+    @Test
+    public void test_injectBeginning_inEmptyMethod_withExplicitName() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("SimpleInjectionBeginningExplicit.java"));
+        launchMixins(cl);
+        assertNumberOfClassesMixified(1);
+        Assert.assertFalse(State.success);
+        new SimplePOJO().noopMethod();
+        Assert.assertTrue(State.success);
+    }
+
+    @Test
     public void test_injectBeginning_inEmptyMethod_noMixin() {
         Assert.assertFalse(State.success);
         new SimplePOJO().noopMethod();

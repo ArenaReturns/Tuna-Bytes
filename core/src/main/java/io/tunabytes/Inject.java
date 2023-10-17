@@ -20,11 +20,11 @@ import java.util.Map;
 public @interface Inject {
 
     /**
-     * The method name that is being targeted
+     * The method name that is being targeted, Default to the method's name
      *
      * @return The target method name to inject into.
      */
-    String method();
+    String method() default "";
 
 //    /**
 //     * A complete descriptor representation of the method to help
@@ -47,7 +47,9 @@ public @interface Inject {
      * @return Injection position.
      * @see At
      */
-    At at();
+    At at() default At.QUERY;
+    
+    AtQuery[] atQuery() default {};
 
     /**
      * The line number for injection. This must be used in tandem
@@ -74,14 +76,14 @@ public @interface Inject {
      */
     int injectLineReplaceEnd() default -1;
 
-  /**
-   * By default, the last return of the method is not copied from the mixins 
-   *  method to the edited class as it can be implicitly put at the end of 
-   *  the method by the compiler.
-   * If you want to return to be copied set this to 'true'.
-   * @return
-   */
-  boolean keepLastReturn() default false;
+    /**
+    * By default, the last return of the method is not copied from the mixins 
+    *  method to the edited class as it can be implicitly put at the end of 
+    *  the method by the compiler.
+    * If you want to return to be copied set this to 'true'.
+    * @return
+    */
+    boolean keepLastReturn() default false;
 
     /**
      * Represents an injection point
@@ -130,7 +132,13 @@ public @interface Inject {
          *
          * @see Inject#lineNumber()
          */
-        AFTER_LINE;
+        AFTER_LINE,
+
+        /**
+         * @see Inject#atQuery()
+         */
+        QUERY
+        ;
 
         private static final Map<String, At> BY_NAME = new HashMap<>();
 

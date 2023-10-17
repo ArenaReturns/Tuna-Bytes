@@ -24,6 +24,10 @@ public class SimplePOJO {
     public void noopMethodWithArgs(String arg1, int arg2) {
 
     }
+    
+    public void printMethod() {
+        System.out.println("print");
+    }
 
     private int i = 0;
 
