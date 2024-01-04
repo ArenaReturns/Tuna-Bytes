@@ -18,9 +18,13 @@ final class MixinsConfig {
 
     public MixinsConfig(Collection<ClassLoader> classLoaders) {
         for (ClassLoader classLoader : classLoaders) {
-            Function<String, InputStream> resourceLoader = name -> classLoader.getResourceAsStream(
-                    classLoader instanceof URLClassLoader ? name :
-                            "/" + name);
+            Function<String, InputStream> resourceLoader = name -> {
+                InputStream res = classLoader.getResourceAsStream(name);
+                if (res == null) {
+                    return classLoader.getResourceAsStream("/" + name);
+                }
+                return res;
+            };
             try {
                 InputStream configStream = resourceLoader.apply("mixins.properties");
                 if (configStream == null) throw new RuntimeException("mixins.properties not found. Did you add tuna-bytes as an annotation processor?");
