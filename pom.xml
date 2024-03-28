@@ -7,14 +7,14 @@
     <groupId>io.tunabytes</groupId>
     <artifactId>tuna-bytes</artifactId>
     <packaging>pom</packaging>
-    <version>${base.version}</version>
+    <version>1.7.0</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         
         <lombok.version>1.18.26</lombok.version>
-        <base.version>1.6.0</base.version>
+        <base.version>1.7.0</base.version>
     </properties>
 
     <modules>
