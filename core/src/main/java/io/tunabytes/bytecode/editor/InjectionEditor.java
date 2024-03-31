@@ -41,14 +41,15 @@ public class InjectionEditor implements MixinsEditor {
                     .collect(Collectors.toList());
             String error = " target method(s) found for mixin:\n\t" + info.getMixinName() + "#" + method.getInjectMethod() + "(...)\n\t\tpatching =>\n\t" +
                     classNode.name.replace("/", ".") + "#";
-            String targetMethodDescriptor = injectIn + "(...)";
+            String targetMethodDescriptor = "..." + injectIn + "(...)";
             String tip = "";
+            String argumentsStr = "";
             if (collected.size() > 1) {
                 Type[] arguments = Type.getArgumentTypes(method.getRealDescriptor());
                 Type[] substringArgument = Arrays.copyOf(arguments, Math.min(method.getLastParameterArgIndex(), arguments.length));
-                String argumentsStr = Arrays.stream(substringArgument).map(Type::toString).collect(Collectors.joining());
-                targetMethodDescriptor = injectIn + "(" + argumentsStr + ")";
-                System.out.println("[info] " + collected.size() + error + targetMethodDescriptor +"\n\tTrying to narrowing it down with descriptor: "
+                argumentsStr = Arrays.stream(substringArgument).map(Type::toString).collect(Collectors.joining());
+                targetMethodDescriptor = "..." + injectIn + "(" + argumentsStr + ")";
+                System.out.println("[info] " + collected.size() + error + targetMethodDescriptor +"\n\tTrying to narrowing it down with args: "
                         + targetMethodDescriptor);
 
                 collected = collected.stream()
@@ -59,6 +60,13 @@ public class InjectionEditor implements MixinsEditor {
                 if (method.getLastParameterArgIndex() == Integer.MAX_VALUE) {
                     tip = "\n\t Did you forget a @StackSeparator ? \n";
                 }
+            }
+
+            if (collected.size() > 1) {
+                String mixinDescriptorWithoutStackSeparator = "(" + argumentsStr + ")" + method.getDescriptor().getReturnType().toString();
+                System.out.println("[info] " + collected.size() + error + targetMethodDescriptor +"\n\tTrying to narrowing it down with return type: "
+                        + targetMethodDescriptor);
+                collected = collected.stream().filter(m -> m.desc.equals(mixinDescriptorWithoutStackSeparator)).collect(Collectors.toList());
             }
 
             if (collected.size() > 1) {
