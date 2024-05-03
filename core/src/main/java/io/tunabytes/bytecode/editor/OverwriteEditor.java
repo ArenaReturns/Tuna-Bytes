@@ -33,6 +33,11 @@ public class OverwriteEditor implements MixinsEditor {
                 underlying.instructions = new InsnList();
                 underlying.instructions.add(node.instructions);
                 underlying.tryCatchBlocks = node.tryCatchBlocks;
+                underlying.localVariables = node.localVariables;
+                underlying.maxLocals = node.maxLocals;
+                underlying.exceptions = node.exceptions;
+                underlying.attrs = node.attrs;
+                underlying.maxStack = node.maxStack;
 
                 for (AbstractInsnNode instruction : underlying.instructions) {
                     remapInstruction(classNode, info, instruction);

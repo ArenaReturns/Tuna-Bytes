@@ -1,7 +1,9 @@
 package fr.jydet.angler.suite;
 
+import fr.jydet.angler.Utils;
 import fr.jydet.angler.mixintargets.ParametrizedEnum;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -13,6 +15,10 @@ import static fr.jydet.angler.Utils.assertNumberOfClassesMixified;
 import static fr.jydet.angler.Utils.launchMixins;
 
 public class EnumMixinTests {
+    @Before
+    public void cleanup() {
+        Utils.cleanup();
+    }
 
     @Test
     public void test_add_enum_field() throws IOException {

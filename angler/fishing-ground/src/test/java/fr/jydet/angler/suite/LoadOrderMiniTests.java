@@ -1,11 +1,13 @@
 package fr.jydet.angler.suite;
 
 import fr.jydet.angler.State;
+import fr.jydet.angler.Utils;
 import fr.jydet.angler.mixintargets.POJOWithParent;
 import fr.jydet.angler.mixintargets.SimplePOJO;
 import io.tunabytes.bytecode.MixinEntry;
 import io.tunabytes.bytecode.MixinsBootstrap;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -20,6 +22,10 @@ import static fr.jydet.angler.Utils.assertNumberOfClassesMixified;
 import static fr.jydet.angler.Utils.launchMixins;
 
 public class LoadOrderMiniTests {
+    @Before
+    public void cleanup() {
+        Utils.cleanup();
+    }
 
     @Test
     public void test_injectEnding_shortCircuit() throws IOException {

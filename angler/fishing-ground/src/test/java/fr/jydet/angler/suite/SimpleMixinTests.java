@@ -2,6 +2,7 @@ package fr.jydet.angler.suite;
 
 import fr.jydet.angler.State;
 import fr.jydet.angler.Utils;
+import fr.jydet.angler.mixintargets.ReturnTestPOJO;
 import fr.jydet.angler.mixintargets.SimplePOJO;
 import org.junit.Assert;
 import org.junit.Before;
@@ -85,6 +86,16 @@ public class SimpleMixinTests {
         Assert.assertFalse(State.success);
         new SimplePOJO().noopMethodWithInternalStateChangeCall();
         Assert.assertFalse(State.success);
+    }
+    
+    @Test
+    public void test_injectWithoutMatchingReturnType() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("InjectReturnsMixin.java"));
+        launchMixins(cl);
+        assertNumberOfClassesMixified(1);
+        Assert.assertFalse(State.success);
+        new ReturnTestPOJO().noopMethod();
+        Assert.assertTrue(State.success);
     }
 
     @Test

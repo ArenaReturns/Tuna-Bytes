@@ -98,6 +98,8 @@ public class InjectionEditor implements MixinsEditor {
             if (! method.isKeepLastReturn()) {
                 if (lastInjectedReturn != null) list.remove(lastInjectedReturn);
             }
+            
+            handleShortCircuit(list);
 
             if (at == At.BEGINNING) {
                 AbstractInsnNode first = targetMethod.instructions.getFirst();

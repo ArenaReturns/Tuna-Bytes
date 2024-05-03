@@ -133,6 +133,10 @@ public class MixinMethodVisitor extends MethodVisitor {
                             injectMethodName = (String) value;
                             break;
                         }
+                        case "returnType": {
+                            returnType = Type.getType((String) value);
+                            break;
+                        }
                         case "lineNumber": {
                             injectLine = (int) value;
                             break;

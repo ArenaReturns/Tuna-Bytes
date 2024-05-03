@@ -26,6 +26,13 @@ public @interface Inject {
      */
     String method() default "";
 
+    /**
+     * The return type of the method that is being targeted, Default to the return type of the mixin method
+     *
+     * @return The target method type to inject into.
+     */
+    String returnType() default "";
+
 //    /**
 //     * A complete descriptor representation of the method to help
 //     * matching the current method. If not use, the first method with the given
@@ -47,9 +54,9 @@ public @interface Inject {
      * @return Injection position.
      * @see At
      */
-    At at() default At.QUERY;
+    At at();
     
-    AtQuery[] atQuery() default {};
+//    AtQuery[] atQuery() default {};
 
     /**
      * The line number for injection. This must be used in tandem
@@ -134,10 +141,10 @@ public @interface Inject {
          */
         AFTER_LINE,
 
-        /**
-         * @see Inject#atQuery()
-         */
-        QUERY
+//        /**
+//         * @see Inject#atQuery()
+//         */
+//        QUERY
         ;
 
         private static final Map<String, At> BY_NAME = new HashMap<>();

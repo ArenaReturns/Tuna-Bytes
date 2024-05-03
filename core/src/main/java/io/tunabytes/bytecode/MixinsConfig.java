@@ -6,11 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
-import sun.applet.AppletClassLoader;
-
-import static java.util.Objects.requireNonNull;
 
 final class MixinsConfig {
 

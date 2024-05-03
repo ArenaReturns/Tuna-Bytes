@@ -1,6 +1,7 @@
 package io.tunabytes.bytecode.introspect;
 
 import io.tunabytes.Mixin;
+import io.tunabytes.bytecode.InvalidMixinException;
 import lombok.Getter;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -72,7 +73,7 @@ public class MixinClassVisitor extends ClassVisitor {
                 FieldNode node = (FieldNode) fv;
                 node.desc = desc;
                 if ((access & Opcodes.ACC_FINAL) != 0 && mirror) {
-                    throw new IllegalStateException("Field '" + descriptor + " " + fname + "' in class '" + MixinClassVisitor.this.name + "' must not be static if it has @Mirror !");
+                    throw new InvalidMixinException("Field '" + descriptor + " " + fname + "' in class '" + MixinClassVisitor.this.name + "' must not be static if it has @Mirror !");
                 }
                 fields.add(new MixinField(access, mirror, definalize, name == null ? fname : name, desc, remapped, enumField, descriptor, (FieldNode) fv));
             }
