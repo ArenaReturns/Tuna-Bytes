@@ -18,6 +18,10 @@ import org.objectweb.asm.tree.MethodNode;
  *     <li>The method's parameter types in order</li>
  * </ul>
  * <p>
+ * The method must be abstract to avoid any confusion.
+ * the provided {@link #runtimeRewriter()} will be instantiated and the asm data will be passed to it
+ * for modification. The instantiation will use the default constructor with no arguments so
+ * make sure to provide one in your {@link Rewritter} implementation.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
@@ -33,6 +37,6 @@ public @interface Rewrite {
     Class<? extends Rewritter> runtimeRewriter();
 
     interface Rewritter {
-      public void rewrite(MethodNode list);
+      void rewrite(MethodNode list);
     }
 }

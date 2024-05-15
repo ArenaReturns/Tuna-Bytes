@@ -43,8 +43,7 @@ public @interface Mixin {
     boolean enumTarget() default false;
 
   /**
-   * Tell if the parent of the mixin is just a placeholder
-   *  use for compiling the mixin.
+   * Tell if the parent of the mixin is just a placeholder used for compiling the mixin.
    * It is generally a bad idea to make a mixin extend a class
    *  if you want this class to have some mixins as well, the
    *  hierarchical linking will mess with the classes load order.

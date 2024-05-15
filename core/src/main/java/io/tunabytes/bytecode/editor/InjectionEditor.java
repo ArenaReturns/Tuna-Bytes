@@ -1,11 +1,10 @@
 package io.tunabytes.bytecode.editor;
 
 import io.tunabytes.Inject.At;
-import io.tunabytes.bytecode.InvalidMixinException;
+import io.tunabytes.bytecode.ClassNarrower;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
 import lombok.SneakyThrows;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
@@ -15,19 +14,18 @@ import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * A mixins editor for processing {@link io.tunabytes.Inject} methods.
  */
 public class InjectionEditor implements MixinsEditor {
 
-    @SneakyThrows @Override public void edit(ClassNode classNode, MixinInfo info) {
+    @SneakyThrows @Override 
+    public void edit(ClassNode classNode, MixinInfo info) {
         for (MixinMethod method : info.getMethods()) {
             if (!method.isInject()) continue;
             if ((method.getMethodNode().access & ACC_ABSTRACT) != 0) {
@@ -35,51 +33,7 @@ public class InjectionEditor implements MixinsEditor {
             }
             At at = method.getInjectAt();
             int line = method.getInjectLine();
-            String injectIn = method.getInjectMethod();
-            List<MethodNode> collected = classNode.methods.stream()
-                    .filter(c -> c.name.equals(injectIn))
-                    .collect(Collectors.toList());
-            String error = " target method(s) found for mixin:\n\t" + info.getMixinName() + "#" + method.getInjectMethod() + "(...)\n\t\tpatching =>\n\t" +
-                    classNode.name.replace("/", ".") + "#";
-            String targetMethodDescriptor = "..." + injectIn + "(...)";
-            String tip = "";
-            String argumentsStr = "";
-            if (collected.size() > 1) {
-                Type[] arguments = Type.getArgumentTypes(method.getRealDescriptor());
-                Type[] substringArgument = Arrays.copyOf(arguments, Math.min(method.getLastParameterArgIndex(), arguments.length));
-                argumentsStr = Arrays.stream(substringArgument).map(Type::toString).collect(Collectors.joining());
-                targetMethodDescriptor = "..." + injectIn + "(" + argumentsStr + ")";
-                System.out.println("[info] " + collected.size() + error + targetMethodDescriptor +"\n\tTrying to narrowing it down with args: "
-                        + targetMethodDescriptor);
-
-                collected = collected.stream()
-                    .filter(m -> {
-                        String desc = m.desc;
-                        return Arrays.equals(Type.getArgumentTypes(desc), substringArgument);
-                    }).collect(Collectors.toList());
-                if (method.getLastParameterArgIndex() == Integer.MAX_VALUE) {
-                    tip = "\n\t Did you forget a @StackSeparator ? \n";
-                }
-            }
-
-            if (collected.size() > 1) {
-                String mixinDescriptorWithoutStackSeparator = "(" + argumentsStr + ")" + method.getDescriptor().getReturnType().toString();
-                System.out.println("[info] " + collected.size() + error + targetMethodDescriptor +"\n\tTrying to narrowing it down with return type: "
-                        + targetMethodDescriptor);
-                collected = collected.stream().filter(m -> m.desc.equals(mixinDescriptorWithoutStackSeparator)).collect(Collectors.toList());
-            }
-
-            if (collected.size() > 1) {
-                throw new InvalidMixinException("Too much matches !\n" + collected.size() + error + targetMethodDescriptor
-                        + "\n" + collected.stream().map(methodNode -> "- " + methodNode.desc)
-                        .collect(Collectors.joining("\n")) + tip);
-            }
-
-            if (collected.isEmpty()) {
-                throw new InvalidMixinException("No" + error + targetMethodDescriptor + tip);
-            }
-
-            MethodNode targetMethod = collected.get(0);
+            MethodNode targetMethod = ClassNarrower.tryNarrow(classNode, info, method);
 
             InsnList list = method.getMethodNode().instructions;
             for (AbstractInsnNode instruction : list) {

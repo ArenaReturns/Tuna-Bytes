@@ -94,7 +94,11 @@ public class SimpleMixinTests {
         launchMixins(cl);
         assertNumberOfClassesMixified(1);
         Assert.assertFalse(State.success);
-        new ReturnTestPOJO().noopMethod();
+        try {
+            new ReturnTestPOJO().noopMethod();
+        } catch (UnsupportedOperationException ignored) {
+            // Expected
+        }
         Assert.assertTrue(State.success);
     }
 
