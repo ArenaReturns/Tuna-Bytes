@@ -79,7 +79,7 @@ public class MirrorFieldsMixinTests {
         URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("ErrorMirrorFinalMixin.java"));
         try {
             launchMixins(cl);
-            Assert.fail("Mixin should be detected as invalid !");
+            Assert.fail("Mixin should be detected as invalid: A @Mirror field must not be final !");
         } catch (InvalidMixinException expected) { }
     }
 
