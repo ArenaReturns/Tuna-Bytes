@@ -58,9 +58,14 @@ public class InjectionEditor implements MixinsEditor {
             if (at == At.BEGINNING) {
                 AbstractInsnNode first = targetMethod.instructions.getFirst();
                 if (first != null) {
+                    int manualBacktrack = 0;
+                    while (manualBacktrack < method.getManualInstructionSkip()) {
+                        first = first.getNext();
+                    }
                     targetMethod.instructions.insert(first, list);
-                } else
+                } else {
                     targetMethod.instructions.add(list);
+                }
             } else if (at == At.END) {
                 AbstractInsnNode lastReturn = null;
                 for (AbstractInsnNode instruction : targetMethod.instructions) {
@@ -79,6 +84,14 @@ public class InjectionEditor implements MixinsEditor {
                     if (!(insnNode instanceof LineNumberNode)) continue;
                     int currentLine = ((LineNumberNode) insnNode).line;
                     if (currentLine == line) {
+                        if (insnNode.getPrevious() instanceof LabelNode) {
+                            insnNode = insnNode.getPrevious();
+                        }
+                        int manualBacktrack = 0;
+                        while (manualBacktrack < method.getManualInstructionSkip()) {
+                            insnNode = insnNode.getPrevious();
+                            manualBacktrack++;
+                        }
                         targetMethod.instructions.insertBefore(insnNode, list);
                         break;
                     }
@@ -88,6 +101,11 @@ public class InjectionEditor implements MixinsEditor {
                     if (!(insnNode instanceof LineNumberNode)) continue;
                     int currentLine = ((LineNumberNode) insnNode).line;
                     if (currentLine == line) {
+                        int manualBacktrack = 0;
+                        while (manualBacktrack < method.getManualInstructionSkip()) {
+                            insnNode = insnNode.getNext();
+                            manualBacktrack++;
+                        }
                         targetMethod.instructions.insert(insnNode, list);
                         break;
                     }

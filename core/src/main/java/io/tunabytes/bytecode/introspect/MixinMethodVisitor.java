@@ -41,6 +41,7 @@ public class MixinMethodVisitor extends MethodVisitor {
     protected int lastParameterArgIndex = Integer.MAX_VALUE;
     protected At injectAt;
     protected CallType type = CallType.INVOKE;
+    protected int manualInstructionSkip = 0;
 
     public MixinMethodVisitor(MethodNode node) {
         super(Opcodes.ASM8, node);
@@ -147,6 +148,10 @@ public class MixinMethodVisitor extends MethodVisitor {
                         }
                         case "injectLineReplaceEnd": {
                             injectLineReplaceEnd = (int) value;
+                            break;
+                        }
+                        case "manualInstructionSkip": {
+                            manualInstructionSkip = (int) value;
                             break;
                         }
                     }

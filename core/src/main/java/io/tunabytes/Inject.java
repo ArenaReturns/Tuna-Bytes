@@ -93,6 +93,13 @@ public @interface Inject {
     boolean keepLastReturn() default false;
 
     /**
+     * Manual number of ASM node to skip before inserting
+     * only works with {@link At#AFTER_LINE}, {@link At#BEFORE_LINE} or {@link At#BEGINNING}
+     * @return
+     */
+    int manualInstructionSkip() default 0;
+
+    /**
      * Represents an injection point
      */
     enum At {

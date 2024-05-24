@@ -92,6 +92,7 @@ public class MixinClassVisitor extends ClassVisitor {
                         descriptor,
                         injectLine,
                         injectLineReplaceEnd,
+                        manualInstructionSkip,
                         injectMethodName,
                         lastParameterArgIndex,
                         injectAt,
