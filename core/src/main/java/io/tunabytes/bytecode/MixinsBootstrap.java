@@ -80,7 +80,7 @@ public final class MixinsBootstrap {
             ClassNode targetNode;
             TargetedMixin writerEntry = writers.get(mixinEntry.getTargetClass());
             if (writerEntry == null) {
-                ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+                ClassWriter writer = new SafeClassWriter(null, null, ClassWriter.COMPUTE_FRAMES);
                 targetNode = new ClassNode();
                 targetReader.accept(targetNode, ClassReader.SKIP_FRAMES);
                 writers.put(mixinEntry.getTargetClass(), new TargetedMixin(writer, mixinEntry.getClassLoader(), targetNode));
