@@ -12,17 +12,17 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MixinClassVisitor extends ClassVisitor {
     private static final Type MIXIN = Type.getType(Mixin.class);
 
     private final List<MixinField> fields = new ArrayList<>();
     private final List<MixinMethod> methods = new ArrayList<>();
-    private boolean isInterface, isEnum;
+    private final Set<String> interfaceToAdd = new HashSet<>();
+    private boolean isInterface;
+    private boolean isEnum;
+    private boolean addAllInterfacesToMixins = true;
     @Getter
     private boolean hasMirroredParent;
     protected Set<String> deletedEnumValues = new HashSet<>();
@@ -41,7 +41,9 @@ public class MixinClassVisitor extends ClassVisitor {
             return new AnnotationVisitor(Opcodes.ASM8) {
                 @Override
                 public void visit(String name, Object value) {
-                    if ("withFakeParentAccessor".equals(name)) {
+                    if ("addAllInterfacesToMixins".equals(name)) {
+                        addAllInterfacesToMixins = (boolean) value;
+                    } else if ("withFakeParentAccessor".equals(name)) {
                         hasMirroredParent = (boolean) value;
                     } else if ("enumTarget".equals(name)) {
                         isEnum = (boolean) value;
@@ -49,7 +51,7 @@ public class MixinClassVisitor extends ClassVisitor {
                         String[] deletedEnumConstants = (String[]) value;
                         for (String deletedEnumConstant : deletedEnumConstants) {
                             String trimmedValue = deletedEnumConstant.trim();
-                            if (! trimmedValue.isEmpty()) {
+                            if (!trimmedValue.isEmpty()) {
                                 deletedEnumValues.add(trimmedValue);
                             }
                         }
@@ -60,16 +62,20 @@ public class MixinClassVisitor extends ClassVisitor {
         return super.visitAnnotation(descriptor, visible);
     }
 
-    @Override public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+    @Override
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         if ((access & Opcodes.ACC_INTERFACE) != 0)
             isInterface = true;
         this.name = name.replace('/', '.');
+        Collections.addAll(this.interfaceToAdd, interfaces);
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
-    @Override public FieldVisitor visitField(int access, String fname, String descriptor, String signature, Object value) {
+    @Override
+    public FieldVisitor visitField(int access, String fname, String descriptor, String signature, Object value) {
         return new MixinFieldVisitor(new FieldNode(access, fname, descriptor, signature, value)) {
-            @Override public void visitEnd() {
+            @Override
+            public void visitEnd() {
                 FieldNode node = (FieldNode) fv;
                 node.desc = desc;
                 if ((access & Opcodes.ACC_FINAL) != 0 && mirror) {
@@ -80,9 +86,11 @@ public class MixinClassVisitor extends ClassVisitor {
         };
     }
 
-    @Override public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+    @Override
+    public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         return new MixinMethodVisitor(new MethodNode(access, name, descriptor, signature, exceptions)) {
-            @Override public void visitEnd() {
+            @Override
+            public void visitEnd() {
                 Type desc = Type.getMethodType(returnType, argumentTypes);
                 node.desc = desc.getDescriptor();
                 methods.add(new MixinMethod(
@@ -115,9 +123,13 @@ public class MixinClassVisitor extends ClassVisitor {
         };
     }
 
-    @Override public void visitEnd() {
+    @Override
+    public void visitEnd() {
+        if (! addAllInterfacesToMixins) {
+            interfaceToAdd.clear();
+        }
         info = new MixinInfo(name, name.replace('.', '/'),
-                isInterface, isEnum, hasMirroredParent, fields, methods, deletedEnumValues);
+                isInterface, isEnum, hasMirroredParent, fields, methods, deletedEnumValues, interfaceToAdd);
         super.visitEnd();
     }
 }

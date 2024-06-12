@@ -18,5 +18,6 @@ public class MixinInfo {
     private final List<MixinField> fields;
     private final List<MixinMethod> methods;
     private final Set<String> deletedEnumValues;
+    private final Set<String> interfacesToAdd;
 
 }

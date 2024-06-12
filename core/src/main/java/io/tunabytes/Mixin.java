@@ -65,4 +65,11 @@ public @interface Mixin {
    * @return Whether the parent of the mixin is a placeholder for mixin compilation.
    */
   boolean withFakeParentAccessor() default false;
+
+    /**
+     * If true, add the mixin class interfaces to the target class
+     * @return Wherether the interface implemented by the mixins will be added
+     * to the mixinified class
+     */
+  boolean addAllInterfacesToMixins() default true;
 }
