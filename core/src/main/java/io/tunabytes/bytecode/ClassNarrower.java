@@ -9,8 +9,14 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+/**
+ * Utility class for narrowing down the target method of a mixin.
+ */
 public final class ClassNarrower {
-    
+
+    /**
+     * Set this to false to log the narrowing process for all mixins, not just the ones that fail.
+     */
     public static boolean LOG_WORK_ONLY_ON_ERROR = true;
     
     public static MethodNode tryNarrow(ClassNode originalNode, MixinInfo fullInfo, MixinMethod method) {

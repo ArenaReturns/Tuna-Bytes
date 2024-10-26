@@ -40,6 +40,9 @@ public @interface Mixin {
      */
     String name() default "";
 
+    /**
+     * This must be set to true if the target class is an enum.
+     */
     boolean enumTarget() default false;
 
   /**
@@ -68,7 +71,7 @@ public @interface Mixin {
 
     /**
      * If true, add the mixin class interfaces to the target class
-     * @return Wherether the interface implemented by the mixins will be added
+     * @return Whether the interface implemented by the mixins will be added
      * to the mixinified class
      */
   boolean addAllInterfacesToMixins() default true;

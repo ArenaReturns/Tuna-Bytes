@@ -25,7 +25,14 @@ import java.util.function.Function;
  */
 public final class MixinsBootstrap {
 
+    /**
+     * Hook that will be called for each registered mixin class, before it is loaded
+     */
     public static BiConsumer<String, ClassWriter> mixinedClassHook = (clazzName, mixinedClazzWriter) -> {};
+
+    /**
+     * Hook that will be called for each mixin entry, allowing to sort or filter them before they are applied
+     */
     public static Function<List<MixinEntry>, List<MixinEntry>> mixingSorterHook = t -> t;
 
     private MixinsBootstrap() { }
