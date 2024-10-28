@@ -25,7 +25,7 @@
                     <target>${maven.compiler.target}</target>
                     <annotationProcessorPaths>
                         <path>
-                            <groupId>io.tunabytes</groupId>
+                            <groupId>com.arenareturns.tuna-bytes</groupId>
                             <artifactId>java8</artifactId>
                             <version>${base.version}</version>
                         </path>
@@ -47,7 +47,7 @@
         </dependency>
         <dependency>
             <artifactId>java8</artifactId>
-            <groupId>io.tunabytes</groupId>
+            <groupId>com.arenareturns.tuna-bytes</groupId>
         </dependency>
     </dependencies>
 </project>

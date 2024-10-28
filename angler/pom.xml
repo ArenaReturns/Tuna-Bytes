@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.tunabytes</groupId>
+        <groupId>com.arenareturns</groupId>
         <artifactId>tuna-bytes</artifactId>
         <version>1.7.6</version>
         <relativePath>../pom.xml</relativePath>
@@ -39,7 +39,7 @@
         <dependencies>
             <dependency>
                 <artifactId>java8</artifactId>
-                <groupId>io.tunabytes</groupId>
+                <groupId>com.arenareturns.tuna-bytes</groupId>
                 <version>${base.version}</version>
             </dependency>
         </dependencies>
@@ -72,7 +72,6 @@
                                             <version>(1.8,1.9)</version>
                                         </requireJavaVersion>
                                     </rules>
-
                                 </configuration>
                             </execution>
                         </executions>
