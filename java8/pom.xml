@@ -12,6 +12,32 @@
 
     <groupId>com.arenareturns.tuna-bytes</groupId>
     <artifactId>java8</artifactId>
+    <version>1.7.6</version>
+
+    <description>ArenaReturns' fork of Tuna Bytes, an all-purpose mixins framework for Java bytecode manipulation at runtime, targeted at those with minimal understanding of the bytecode structure.</description>
+    <url>https://github.com/ArenaReturns/Tuna-Bytes</url>
+
+    <licenses>
+        <license>
+            <name>Apache 2.0 License</name>
+            <url>https://opensource.org/license/apache-2-0</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Arena Returns</name>
+            <email>contact@arenareturns.com</email>
+            <organization>com.arenareturns</organization>
+            <organizationUrl>https://github.com/ArenaReturns</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/ArenaReturns/Tuna-Bytes.git</connection>
+        <developerConnection>scm:git:ssh://github.com:ArenaReturns/Tuna-Bytes.git</developerConnection>
+        <url>https://github.com/ArenaReturns/Tuna-Bytes</url>
+    </scm>
 
     <dependencies>
         <dependency>

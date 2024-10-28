@@ -3,7 +3,7 @@ package io.tunabytes.classloader;
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
 
-final class Java8 implements ClassDefiner {
+public final class Java8 implements ClassDefiner {
 
     private final Method defineClass = getDefineClassMethod();
     private final SecurityActions stack = SecurityActions.stack;
