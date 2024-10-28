@@ -25,7 +25,14 @@ import java.util.function.Function;
  */
 public final class MixinsBootstrap {
 
+    /**
+     * Hook that will be called for each registered mixin class, before it is loaded
+     */
     public static BiConsumer<String, ClassWriter> mixinedClassHook = (clazzName, mixinedClazzWriter) -> {};
+
+    /**
+     * Hook that will be called for each mixin entry, allowing to sort or filter them before they are applied
+     */
     public static Function<List<MixinEntry>, List<MixinEntry>> mixingSorterHook = t -> t;
 
     private MixinsBootstrap() { }
@@ -62,6 +69,7 @@ public final class MixinsBootstrap {
         classLoaders.addAll(searchClassLoaders);
         List<MixinsEditor> editors = new ArrayList<>();
         editors.add(new DefinalizeEditor());
+        editors.add(new EnumEditor());
         editors.add(new OverwriteEditor());
         editors.add(new RewriteEditor());
         editors.add(new AccessorEditor());
@@ -79,7 +87,7 @@ public final class MixinsBootstrap {
             ClassNode targetNode;
             TargetedMixin writerEntry = writers.get(mixinEntry.getTargetClass());
             if (writerEntry == null) {
-                ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+                ClassWriter writer = new SafeClassWriter(null, null, ClassWriter.COMPUTE_FRAMES);
                 targetNode = new ClassNode();
                 targetReader.accept(targetNode, ClassReader.SKIP_FRAMES);
                 writers.put(mixinEntry.getTargetClass(), new TargetedMixin(writer, mixinEntry.getClassLoader(), targetNode));

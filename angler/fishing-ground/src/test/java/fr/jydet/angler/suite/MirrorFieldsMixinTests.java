@@ -4,6 +4,7 @@ import fr.jydet.angler.State;
 import fr.jydet.angler.Utils;
 import fr.jydet.angler.mixintargets.POJOWithParent;
 import fr.jydet.angler.mixintargets.SimplePOJO;
+import io.tunabytes.bytecode.InvalidMixinException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,11 +77,10 @@ public class MirrorFieldsMixinTests {
     @Test
     public void test_mirrorIsFinalField() throws IOException {
         URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("ErrorMirrorFinalMixin.java"));
-        launchMixins(cl);
         try {
-            new SimplePOJO().noopMethod();
-            Assert.fail("Mixin should make this class crash !");
-        } catch (IllegalStateException expected) { }
+            launchMixins(cl);
+            Assert.fail("Mixin should be detected as invalid: A @Mirror field must not be final !");
+        } catch (InvalidMixinException expected) { }
     }
 
     @Test

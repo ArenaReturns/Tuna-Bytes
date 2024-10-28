@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * The mixins method name and signature must exactly match the targeted method.
  * That is:
  * <ul>
- *     <li>The method's name. This can also be specifind in {@link Overwrite#value()}</li>
+ *     <li>The method's name. This can also be specified in {@link Overwrite#value()}</li>
  *     <li>The method's return type</li>
  *     <li>The method's parameter types in order</li>
  * </ul>
@@ -21,7 +21,7 @@ import java.lang.annotation.Target;
  * to one overwrite being dismissed. Hence, it is not recommended to have more
  * than one {@link Overwrite} for each method.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Overwrite {
 

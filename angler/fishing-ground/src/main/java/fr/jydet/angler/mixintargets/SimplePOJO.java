@@ -1,6 +1,8 @@
 package fr.jydet.angler.mixintargets;
 
 import fr.jydet.angler.InternalState;
+import fr.jydet.angler.mixintargets.Message.Message1;
+import fr.jydet.angler.mixintargets.Message.Message2;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +25,10 @@ public class SimplePOJO {
 
     public void noopMethodWithArgs(String arg1, int arg2) {
 
+    }
+    
+    public void printMethod() {
+        System.out.println("print");
     }
 
     private int i = 0;
@@ -83,6 +89,21 @@ public class SimplePOJO {
         }
 
         return 3;
+    }
+    
+    public void multiVariableCastedSwitch(Message o) {
+        switch (o.getId()) {
+            case 1: {
+                Message1 msg = (Message1) o;
+                System.out.println(msg.getField1());
+                break;
+            }
+            case 2: {
+                Message2 msg = (Message2) o;
+                System.out.println(msg.getField2());
+                break;
+            }
+        }
     }
 
 }

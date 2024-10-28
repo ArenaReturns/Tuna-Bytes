@@ -75,6 +75,8 @@ public class AccessorEditor implements MixinsEditor {
                 }
                 node.methods.add(impl);
             }
+        } else {
+            node.interfaces.addAll(info.getInterfacesToAdd());
         }
     }
 

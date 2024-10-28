@@ -23,7 +23,7 @@ import java.lang.annotation.Target;
  *     <li>Mirror methods must be abstract.</li>
  * </ul>
  */
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Mirror {
 

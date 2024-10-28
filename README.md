@@ -8,7 +8,7 @@
 Tuna-bytes is an all-purpose powerful class and bytecode manipulation mixins for Java, which is intended at those with minimal understanding of the Java bytecode structure.
 
 ## Features
-- Full support for the notorious Java 9+ versions, as well as Java 8.
+- ~~Full support for the notorious Java 9+ versions~~, as well as Java 8.
 - Does not require access to the source code of classes, and works well even on third-party resources.
 - Does not require any knowledge of the Java bytecode.
 - Requires zero overhead to get started. Just add Tuna-Bytes as a dependency and as an annotation processor, and Tuna-Bytes will handle the rest.

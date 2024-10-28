@@ -20,11 +20,18 @@ import java.util.Map;
 public @interface Inject {
 
     /**
-     * The method name that is being targeted
+     * The method name that is being targeted, Default to the method's name
      *
      * @return The target method name to inject into.
      */
-    String method();
+    String method() default "";
+
+    /**
+     * The return type of the method that is being targeted, Default to the return type of the mixin method
+     *
+     * @return The target method type to inject into.
+     */
+    String returnType() default "";
 
 //    /**
 //     * A complete descriptor representation of the method to help
@@ -48,6 +55,8 @@ public @interface Inject {
      * @see At
      */
     At at();
+    
+//    AtQuery[] atQuery() default {};
 
     /**
      * The line number for injection. This must be used in tandem
@@ -74,14 +83,21 @@ public @interface Inject {
      */
     int injectLineReplaceEnd() default -1;
 
-  /**
-   * By default, the last return of the method is not copied from the mixins 
-   *  method to the edited class as it can be implicitly put at the end of 
-   *  the method by the compiler.
-   * If you want to return to be copied set this to 'true'.
-   * @return
-   */
-  boolean keepLastReturn() default false;
+    /**
+    * By default, the last return of the method is not copied from the mixins 
+    *  method to the edited class as it can be implicitly put at the end of 
+    *  the method by the compiler.
+    * If you want to return to be copied set this to 'true'.
+    * @return
+    */
+    boolean keepLastReturn() default false;
+
+    /**
+     * Manual number of ASM node to skip before inserting
+     * only works with {@link At#AFTER_LINE}, {@link At#BEFORE_LINE} or {@link At#BEGINNING}
+     * @return
+     */
+    int manualInstructionSkip() default 0;
 
     /**
      * Represents an injection point
@@ -130,7 +146,13 @@ public @interface Inject {
          *
          * @see Inject#lineNumber()
          */
-        AFTER_LINE;
+        AFTER_LINE,
+
+//        /**
+//         * @see Inject#atQuery()
+//         */
+//        QUERY
+        ;
 
         private static final Map<String, At> BY_NAME = new HashMap<>();
 

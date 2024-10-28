@@ -2,6 +2,7 @@ package fr.jydet.angler.suite;
 
 import fr.jydet.angler.State;
 import fr.jydet.angler.Utils;
+import fr.jydet.angler.mixintargets.ReturnTestPOJO;
 import fr.jydet.angler.mixintargets.SimplePOJO;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,6 +39,26 @@ public class SimpleMixinTests {
     }
 
     @Test
+    public void test_injectBeginning_inEmptyMethod_withImplicitName() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("SimpleInjectionBeginningImplicit.java"));
+        launchMixins(cl);
+        assertNumberOfClassesMixified(1);
+        Assert.assertFalse(State.success);
+        new SimplePOJO().noopMethod();
+        Assert.assertTrue(State.success);
+    }
+
+    @Test
+    public void test_injectBeginning_inEmptyMethod_withExplicitName() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("SimpleInjectionBeginningExplicit.java"));
+        launchMixins(cl);
+        assertNumberOfClassesMixified(1);
+        Assert.assertFalse(State.success);
+        new SimplePOJO().noopMethod();
+        Assert.assertTrue(State.success);
+    }
+
+    @Test
     public void test_injectBeginning_inEmptyMethod_noMixin() {
         Assert.assertFalse(State.success);
         new SimplePOJO().noopMethod();
@@ -65,6 +86,20 @@ public class SimpleMixinTests {
         Assert.assertFalse(State.success);
         new SimplePOJO().noopMethodWithInternalStateChangeCall();
         Assert.assertFalse(State.success);
+    }
+    
+    @Test
+    public void test_injectWithoutMatchingReturnType() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("InjectReturnsMixin.java"));
+        launchMixins(cl);
+        assertNumberOfClassesMixified(1);
+        Assert.assertFalse(State.success);
+        try {
+            new ReturnTestPOJO().noopMethod();
+        } catch (UnsupportedOperationException ignored) {
+            // Expected
+        }
+        Assert.assertTrue(State.success);
     }
 
     @Test

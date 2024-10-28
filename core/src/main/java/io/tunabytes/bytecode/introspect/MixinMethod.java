@@ -20,6 +20,7 @@ public final class MixinMethod {
     private final String realDescriptor;
     private final int injectLine;
     private final int injectLineReplaceEnd;
+    private final int manualInstructionSkip;
     private final String injectMethod;
     private final int lastParameterArgIndex;
     private final At injectAt;

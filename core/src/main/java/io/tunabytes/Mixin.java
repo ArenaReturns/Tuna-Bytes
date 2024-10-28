@@ -40,9 +40,13 @@ public @interface Mixin {
      */
     String name() default "";
 
+    /**
+     * This must be set to true if the target class is an enum.
+     */
+    boolean enumTarget() default false;
+
   /**
-   * Tell if the parent of the mixin is just a placeholder
-   *  use for compiling the mixin.
+   * Tell if the parent of the mixin is just a placeholder used for compiling the mixin.
    * It is generally a bad idea to make a mixin extend a class
    *  if you want this class to have some mixins as well, the
    *  hierarchical linking will mess with the classes load order.
@@ -64,4 +68,11 @@ public @interface Mixin {
    * @return Whether the parent of the mixin is a placeholder for mixin compilation.
    */
   boolean withFakeParentAccessor() default false;
+
+    /**
+     * If true, add the mixin class interfaces to the target class
+     * @return Whether the interface implemented by the mixins will be added
+     * to the mixinified class
+     */
+  boolean addAllInterfacesToMixins() default true;
 }

@@ -6,10 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
-
-import static java.util.Objects.requireNonNull;
 
 final class MixinsConfig {
 
@@ -18,9 +15,13 @@ final class MixinsConfig {
 
     public MixinsConfig(Collection<ClassLoader> classLoaders) {
         for (ClassLoader classLoader : classLoaders) {
-            Function<String, InputStream> resourceLoader = name -> classLoader.getResourceAsStream(
-                    classLoader instanceof URLClassLoader ? name :
-                            "/" + name);
+            Function<String, InputStream> resourceLoader = name -> {
+                InputStream stream = classLoader instanceof URLClassLoader ? null : classLoader.getResourceAsStream("/" + name);
+                if (stream == null) {
+                    stream = classLoader.getResourceAsStream(name);
+                }
+                return stream;
+            };
             try {
                 InputStream configStream = resourceLoader.apply("mixins.properties");
                 if (configStream == null) throw new RuntimeException("mixins.properties not found. Did you add tuna-bytes as an annotation processor?");
