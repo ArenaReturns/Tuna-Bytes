@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.arenareturns</groupId>
         <artifactId>tuna-bytes</artifactId>
-        <version>1.7.6</version>
+        <version>1.7.7</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 

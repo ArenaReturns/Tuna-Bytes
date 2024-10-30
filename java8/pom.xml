@@ -2,17 +2,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>tuna-bytes</artifactId>
-        <groupId>com.arenareturns</groupId>
-        <version>1.7.6</version>
-    </parent>
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <lombok.version>1.18.26</lombok.version>
+        <base.version>1.7.7</base.version>
+    </properties>
 
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.arenareturns.tuna-bytes</groupId>
     <artifactId>java8</artifactId>
-    <version>1.7.6</version>
+    <version>1.7.7</version>
 
     <description>ArenaReturns' fork of Tuna Bytes, an all-purpose mixins framework for Java bytecode manipulation at runtime, targeted at those with minimal understanding of the bytecode structure.</description>
     <url>https://github.com/ArenaReturns/Tuna-Bytes</url>
