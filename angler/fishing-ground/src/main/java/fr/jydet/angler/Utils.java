@@ -29,13 +29,22 @@ public final class Utils {
      */
     public static void launchMixins(ClassLoader cl) {
         AtomicBoolean noMixinsFound = new AtomicBoolean(true);
+        MixinsBootstrap.mixingSorterHook = (mixins -> {
+            System.out.println("Mixins found: " + mixins.size());
+            return mixins;
+        });
+        
         //Dump all the mixinified classes
         MixinsBootstrap.mixinedClassHook = (clazzName, mixinedClazzWriter) -> {
             noMixinsFound.set(false);
             System.out.println("Clazz '" + clazzName + "' mixinified ! (∩｀-´)⊃━☆ﾟ.*･｡ﾟ");
             dumpBytecode(clazzName, mixinedClazzWriter.toByteArray());
         };
-        MixinsBootstrap.init(false, Collections.singleton(cl));
+        if (cl == null) {
+            MixinsBootstrap.init(false);
+        } else {
+            MixinsBootstrap.init(false, Collections.singleton(cl));
+        }
         if (noMixinsFound.get()) {
             Assert.fail("No mixins found !");
         }
