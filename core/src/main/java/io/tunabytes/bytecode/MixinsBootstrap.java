@@ -117,6 +117,8 @@ public final class MixinsBootstrap {
                         throw new IllegalStateException("Class " + writerEntry.getKey() + " has already been loaded.");
                     }
                     throw new IllegalStateException("Unable to load mixin modifications for class " + writerEntry.getKey(), throwable);
+                } else {
+                    System.err.println("Unable to load mixin modifications for class " + writerEntry.getKey());
                 }
             }
         }

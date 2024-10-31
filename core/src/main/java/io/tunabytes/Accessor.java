@@ -1,5 +1,6 @@
 package io.tunabytes;
 
+import io.tunabytes.bytecode.introspect.MixinMethod.CallType;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -72,5 +73,18 @@ public @interface Accessor {
      * @return The property or method name.
      */
     String value() default "";
+
+    /**
+     * The type of call you want to make, inferred from the method name but will be
+     * default to INVOKE when using a custom {#value()}.
+     */
+    CallType type() default CallType.INVOKE;
+
+    /**
+     * The accessed property will by default start with a lowercase letter. 
+     * (e.g. getAbc() -> abc) following Java Bean naming conventions. You
+     * can specify that the property name starts with an uppercase letter with this option.
+     */
+    boolean nameStartWithLowercase() default true;
 
 }

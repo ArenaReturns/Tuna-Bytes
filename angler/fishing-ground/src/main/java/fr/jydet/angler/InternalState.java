@@ -18,4 +18,8 @@ public class InternalState extends Observable {
     public boolean hasChanged() {
         return i != 0;
     }
+    
+    public void reset() {
+        i = 0;
+    }
 }

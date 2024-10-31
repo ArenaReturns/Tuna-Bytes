@@ -27,11 +27,12 @@ public class MixinMethodVisitor extends MethodVisitor {
     private static final String MIRROR = Type.getDescriptor(Mirror.class);
     private static final String DEFINALIZE = Type.getDescriptor(Definalize.class);
     private static final String ACTUAL_TYPE = Type.getDescriptor(ActualType.class);
+
     protected MethodNode node;
     protected String mirrorName;
     protected Type returnType;
     protected Type[] argumentTypes;
-    protected boolean overwrite, inject, accessor, mirror, definalize, remap, keepLastReturn, rewrite;
+    protected boolean overwrite, inject, accessor, mirror, definalize, remap, keepLastReturn, rewrite, forceLowerCase = true;
     protected String overwrittenName;
     protected String injectMethodName;
     protected Class<? extends Rewritter> runtimeRewriter;
@@ -40,7 +41,7 @@ public class MixinMethodVisitor extends MethodVisitor {
     protected int injectLineReplaceEnd = -1;
     protected int lastParameterArgIndex = Integer.MAX_VALUE;
     protected At injectAt;
-    protected CallType type = CallType.INVOKE;
+    protected CallType type;
     protected int manualInstructionSkip = 0;
 
     public MixinMethodVisitor(MethodNode node) {
@@ -51,9 +52,13 @@ public class MixinMethodVisitor extends MethodVisitor {
         argumentTypes = desc.getArgumentTypes();
     }
 
-    private static String normalize(String prefix, String value) {
+    private static String normalize(String prefix, String value, boolean forceLowercase) {
         if (value.length() > prefix.length()) {
-            return Character.toLowerCase(value.charAt(prefix.length())) + value.substring(prefix.length() + 1);
+            char firstLetter = value.charAt(prefix.length());
+            if (forceLowercase) {
+                firstLetter = Character.toLowerCase(firstLetter);
+            }
+            return firstLetter + value.substring(prefix.length() + 1);
         }
         return value;
     }
@@ -111,8 +116,15 @@ public class MixinMethodVisitor extends MethodVisitor {
             @Override
             public void visit(String name, Object value) {
                 super.visit(name, value);
-                if (visitingAccessor && name.equals("value")) {
-                    accessorName = (String) value;
+                if (visitingAccessor) {
+                    switch (name) {
+                        case "value":
+                            accessorName = (String) value;
+                            break;
+                        case "nameStartWithLowercase":
+                            forceLowerCase = (boolean) value;
+                            break;
+                    }
                 }
                 if ((visitingRewrite || visitingOverwrite) && name.equals("value")) {
                     overwrittenName = (String) value;
@@ -163,6 +175,8 @@ public class MixinMethodVisitor extends MethodVisitor {
                 super.visitEnum(name, descriptor, value);
                 if (visitingInject && name.equals("at")) {
                     injectAt = At.at(value);
+                } else if (visitingAccessor && name.equals("type")) {
+                    type = CallType.valueOf(value);
                 }
             }
         };
@@ -195,27 +209,39 @@ public class MixinMethodVisitor extends MethodVisitor {
     }
 
     protected String getActualName(String accessorName) {
+        String prefix;
         if (accessorName.startsWith("get")) {
-            type = CallType.GET;
-            return normalize("get", accessorName);
+            prefix = "get";
+            if (type == null) {
+                type = CallType.GET;
+            }
+        } else if (accessorName.startsWith("set")) {
+            prefix = "set";
+            if (type == null) {
+                type = CallType.SET;
+            }
+        } else if (accessorName.startsWith("is")) {
+            prefix = "is";
+            if (type == null) {
+                type = CallType.GET;
+            }
+        } else if (accessorName.startsWith("call")) {
+            prefix = "call";
+            if (type == null) {
+                type = CallType.INVOKE;
+            }
+        } else if (accessorName.startsWith("invoke")) {
+            prefix = "invoke";
+            if (type == null) {
+                type = CallType.INVOKE;
+            }
+        } else {
+            if (type == null) {
+                type = CallType.INVOKE;
+            }
+            return accessorName;
         }
-        if (accessorName.startsWith("set")) {
-            type = CallType.SET;
-            return normalize("set", accessorName);
-        }
-        if (accessorName.startsWith("is")) {
-            type = CallType.GET;
-            return normalize("is", accessorName);
-        }
-        if (accessorName.startsWith("call")) {
-            type = CallType.INVOKE;
-            return normalize("call", accessorName);
-        }
-        if (accessorName.startsWith("invoke")) {
-            type = CallType.INVOKE;
-            return normalize("invoke", accessorName);
-        }
-        return accessorName;
+        return normalize(prefix, accessorName, forceLowerCase);
     }
 
 

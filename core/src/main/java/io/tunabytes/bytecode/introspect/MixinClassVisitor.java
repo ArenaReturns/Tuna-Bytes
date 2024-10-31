@@ -2,6 +2,7 @@ package io.tunabytes.bytecode.introspect;
 
 import io.tunabytes.Mixin;
 import io.tunabytes.bytecode.InvalidMixinException;
+import io.tunabytes.bytecode.introspect.MixinMethod.CallType;
 import lombok.Getter;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -117,7 +118,7 @@ public class MixinClassVisitor extends ClassVisitor {
                         overwrittenName == null ? name : overwrittenName,
                         accessorName == null ? getActualName(name) : accessorName,
                         node,
-                        type
+                        type == null ? CallType.INVOKE : type
                 ));
             }
         };

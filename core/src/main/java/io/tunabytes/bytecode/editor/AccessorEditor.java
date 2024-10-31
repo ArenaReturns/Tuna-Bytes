@@ -25,10 +25,14 @@ public class AccessorEditor implements MixinsEditor {
                 Type targetType = Type.getMethodType(n.desc);
                 Type returnType = targetType.getReturnType();
                 Type[] arguments = targetType.getArgumentTypes();
-                if (method.getType() == CallType.GET)
+                if (method.getType() == CallType.GET) {
                     targetType = targetType.getReturnType();
-                else if (method.getType() == CallType.SET)
+                } else if (method.getType() == CallType.SET) {
+                    if (arguments.length != 1) {
+                        throw new IllegalArgumentException("Accessor setter must have exactly one argument! (" + node.name + " in " + info.getMixinName() + ")");
+                    }
                     targetType = arguments[0];
+                }
 
                 boolean isStatic;
                 switch (method.getType()) {
@@ -36,9 +40,10 @@ public class AccessorEditor implements MixinsEditor {
                         FieldNode accessed = node.fields.stream().filter(c -> c.name.equals(method.getAccessedProperty())).findFirst()
                                 .orElseThrow(() -> new NoSuchFieldException(method.getAccessedProperty()));
                         isStatic = (accessed.access & ACC_STATIC) != 0;
-                        if (!isStatic)
+                        if (!isStatic) {
                             impl.instructions.add(new VarInsnNode(ALOAD, 0));
-                        impl.instructions.add(new FieldInsnNode(GETFIELD, node.name, method.getAccessedProperty(), targetType.getDescriptor()));
+                        }
+                        impl.instructions.add(new FieldInsnNode(isStatic ? GETSTATIC : GETFIELD, node.name, method.getAccessedProperty(), targetType.getDescriptor()));
                         impl.instructions.add(new InsnNode(targetType.getOpcode(IRETURN)));
                         break;
                     case SET:
