@@ -1,12 +1,12 @@
 package io.tunabytes.bytecode.editor;
 
+import io.tunabytes.bytecode.introspect.MixinField;
+import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
+import lombok.SneakyThrows;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
-import io.tunabytes.bytecode.introspect.MixinField;
-import io.tunabytes.bytecode.introspect.MixinInfo;
-import lombok.SneakyThrows;
 import org.objectweb.asm.tree.MethodNode;
 
 /**
@@ -14,18 +14,18 @@ import org.objectweb.asm.tree.MethodNode;
  */
 public class DefinalizeEditor implements MixinsEditor {
 
-    @SneakyThrows @Override public void edit(ClassNode node, MixinInfo info) {
-        for (MixinField field : info.getFields()) {
+    @SneakyThrows @Override public void edit(ClassNode originalClassNode, MixinInfo info) {
+        for (MixinField field : info.getMixinFields()) {
             if (field.isDefinalize() && field.isMirror()) {
-                FieldNode fnode = node.fields.stream().filter(c -> c.name.equals(field.getName())).findFirst()
-                        .orElseThrow(() -> new NoSuchFieldException(field.getName()));
+                FieldNode fnode = originalClassNode.fields.stream().filter(c -> c.name.equals(field.getTargetFieldName())).findFirst()
+                        .orElseThrow(() -> new NoSuchFieldException(field.getTargetFieldName()));
                 fnode.access &= ~Opcodes.ACC_FINAL;
             }
         }
-        for (MixinMethod method : info.getMethods()) {
+        for (MixinMethod method : info.getMixinMethods()) {
             if (method.isDefinalize() && method.isMirror()) {
-                MethodNode mnode = node.methods.stream().filter(c -> c.name.equals(method.getName())).findFirst()
-                        .orElseThrow(() -> new NoSuchFieldException(method.getName()));
+                MethodNode mnode = originalClassNode.methods.stream().filter(c -> c.name.equals(method.getTargetMethodName())).findFirst()
+                        .orElseThrow(() -> new NoSuchFieldException(method.getTargetMethodName()));
                 mnode.access &= ~Opcodes.ACC_FINAL;
             }
         }

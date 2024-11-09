@@ -12,7 +12,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URLClassLoader;
 
-import static fr.jydet.angler.MixinCompiler.*;
+import static fr.jydet.angler.MixinCompiler.compileAndLoad;
+import static fr.jydet.angler.MixinCompiler.getFilesFromMixinsTank;
 import static fr.jydet.angler.Utils.assertNumberOfClassesMixified;
 import static fr.jydet.angler.Utils.launchMixins;
 
@@ -34,6 +35,17 @@ public class MirrorFieldsMixinTests {
     @Test
     public void test_mirrorInternalFieldMixin() throws IOException {
         URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("MirrorInternalFieldMixin.java"));
+        launchMixins(cl);
+        assertNumberOfClassesMixified(1);
+        SimplePOJO simplePOJO = new SimplePOJO();
+        Assert.assertFalse(simplePOJO.getInternalAtomicBoolean().get());
+        simplePOJO.noopMethod();
+        Assert.assertTrue(simplePOJO.getInternalAtomicBoolean().get());
+    }
+
+    @Test
+    public void test_mirrorInternalFieldValueMixin() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("MirrorInternalFieldValueMixin.java"));
         launchMixins(cl);
         assertNumberOfClassesMixified(1);
         SimplePOJO simplePOJO = new SimplePOJO();
@@ -80,7 +92,9 @@ public class MirrorFieldsMixinTests {
         try {
             launchMixins(cl);
             Assert.fail("Mixin should be detected as invalid: A @Mirror field must not be final !");
-        } catch (InvalidMixinException expected) { }
+        } catch (InvalidMixinException expected) {
+            expected.printStackTrace();
+        }
     }
 
     @Test

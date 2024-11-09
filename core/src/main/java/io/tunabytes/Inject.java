@@ -74,6 +74,7 @@ public @interface Inject {
     /**
      * Used with {@link At#REPLACE_LINE} to specify a range of lines to be replaced
      *  where the inclusive range is defined by [lineNumber,lineNumberEnd].
+     *  If not specified only the line at {{@link #lineNumber()}} will be replaced
      * <p>
      * Note: The line number must match the number in the source code. Since
      * line numbers are preserved into the bytecode as instructions when the class is
@@ -81,7 +82,7 @@ public @interface Inject {
      * most likely going to yield incorrect lines.
      * @return The last line number to be replaced
      */
-    int injectLineReplaceEnd() default -1;
+    int injectLineReplaceEnd() default Integer.MIN_VALUE;
 
     /**
     * By default, the last return of the method is not copied from the mixins 

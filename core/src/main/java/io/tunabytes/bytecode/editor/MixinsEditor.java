@@ -1,20 +1,15 @@
 package io.tunabytes.bytecode.editor;
 
+import io.tunabytes.bytecode.InvalidMixinException;
 import io.tunabytes.bytecode.introspect.MixinField;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.*;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.TypeInsnNode;
 
 /**
  * Represents a transformer for editing class nodes.
@@ -37,10 +32,10 @@ public interface MixinsEditor extends Opcodes {
     /**
      * Edits the class node as needed.
      *
-     * @param node Class node to edit.
+     * @param originalClassNode Class node to edit.
      * @param info Information about the mixin being transformed
      */
-    void edit(ClassNode node, MixinInfo info);
+    void edit(ClassNode originalClassNode, MixinInfo info);
 
     /**
      * Applies simple changes to methods and fields instructions to make sure they have correct references
@@ -54,15 +49,19 @@ public interface MixinsEditor extends Opcodes {
             FieldInsnNode insn = (FieldInsnNode) instruction;
             if (insn.owner.equals(info.getMixinInternalName())) {
                 insn.owner = classNode.name;
-                String mixinNameArray = "L" + info.getMixinInternalName() + ";";
-                if (info.isMixinEnum() && insn.desc.equals(mixinNameArray)) {
+                if (info.isMixinEnum() && insn.desc.equals("L" + info.getMixinInternalName() + ";")) {
                     insn.desc = "L" + insn.owner + ";";
                 } else {
-                    info.getFields().stream()
-                        .filter(MixinField::isRemapped)
-                        .filter(c -> c.getType().equals(insn.desc))
-                        .findFirst()
-                        .ifPresent(field -> insn.desc = field.getDesc());
+                    MixinField mixinField = info.getMixinFields().stream()
+                            .filter(mf -> mf.getType().equals(insn.desc) && mf.getNode().name.equals(insn.name))
+                            .findFirst()
+                            .orElseThrow(() -> new InvalidMixinException("Couldn't found remap target of an access to " + insn + " from mixin " + info.getMixinName()));
+                    if (mixinField.isRemapped()) {
+                        insn.desc = mixinField.getDesc();
+                    }
+                    if (! insn.name.equals(mixinField.getTargetFieldName())) {
+                        insn.name = mixinField.getTargetFieldName();
+                    }
                 }
             }
         } else if (instruction instanceof MethodInsnNode) {
@@ -70,20 +69,26 @@ public interface MixinsEditor extends Opcodes {
             if (isShortCircuit(insn)) {
                 return;
             }
+
             if (insn.getOpcode() == INVOKEINTERFACE && insn.itf && insn.owner.equals(info.getMixinInternalName())) {
                 insn.setOpcode(INVOKEVIRTUAL);
                 insn.itf = false;
             }
-//            if (info.isMirrorParent() && insn.getOpcode() == INVOKESPECIAL ) {
-//                insn.owner = classNode.superName;
-//            } wtf ?
+
+            //a call was made to a method inside the mixin class, we need to remap it
             if (insn.owner.equals(info.getMixinInternalName())) {
                 insn.owner = classNode.name;
-                info.getMethods().stream()
-                    .filter(MixinMethod::isRequireTypeRemapping)
-                    .filter(c -> c.getRealDescriptor().equals(insn.desc))
-                    .findFirst()
-                    .ifPresent(method -> insn.desc = method.getDescriptor().getDescriptor());
+                MixinMethod mixinMethod = info.getMixinMethods().stream()
+                        .filter(mm -> mm.getRealDescriptor().equals(insn.desc) &&
+                                mm.getMethodNode().name.equals(insn.name))
+                        .findFirst()
+                        .orElseThrow(() -> new InvalidMixinException("Couldn't found remap target of a call to " + insn + " from mixin " + info.getMixinName()));
+                if (mixinMethod.isRequireTypeRemapping()) {
+                    insn.desc = mixinMethod.getRealDescriptor();
+                }
+                if (! insn.name.equals(mixinMethod.getTargetMethodName())) {
+                    insn.name = mixinMethod.getTargetMethodName();
+                }
             }
         } else if (instruction instanceof TypeInsnNode) {
             TypeInsnNode typeInsnNode = (TypeInsnNode) instruction;

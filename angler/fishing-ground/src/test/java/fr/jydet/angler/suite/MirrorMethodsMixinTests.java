@@ -42,6 +42,17 @@ public class MirrorMethodsMixinTests {
     }
 
     @Test
+    public void test_mirrorInternalMethodValueMixin() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("MirrorInternalMethodValueMixin.java"));
+        launchMixins(cl);
+        assertNumberOfClassesMixified(1);
+        SimplePOJO simplePOJO = new SimplePOJO();
+        Assert.assertFalse(simplePOJO.getState().hasChanged());
+        simplePOJO.noopMethod();
+        Assert.assertTrue(simplePOJO.getState().hasChanged());
+    }
+
+    @Test
     public void test_mirrorUnknownInternalMethod() throws IOException {
         URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("MirrorUnknownMethodMixin.java"));
         launchMixins(cl);

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tuna-bytes</artifactId>
         <groupId>com.arenareturns</groupId>
-        <version>1.7.8</version>
+        <version>1.7.9</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -22,7 +22,7 @@
         <dependency>
             <groupId>com.arenareturns.tuna-bytes</groupId>
             <artifactId>core</artifactId>
-            <version>1.7.8</version>
+            <version>1.7.9</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

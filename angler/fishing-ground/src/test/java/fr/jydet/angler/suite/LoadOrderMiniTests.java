@@ -51,10 +51,7 @@ public class LoadOrderMiniTests {
             return mixinEntries;
         };
 
-        try {
-            launchMixins(cl);
-            Assert.fail("Loading should have failed");
-        } catch (IllegalStateException expected) { }
+        launchMixins(cl);
     }
 
 

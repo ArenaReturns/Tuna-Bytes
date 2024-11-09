@@ -1,46 +1,46 @@
 package io.tunabytes.bytecode.editor;
 
+import io.tunabytes.bytecode.ClassNarrower;
 import io.tunabytes.bytecode.introspect.MixinField;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
 import lombok.SneakyThrows;
-import org.objectweb.asm.tree.*;
-
-import java.util.Iterator;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.MethodNode;
 
 /**
  * A mixins editor for processing {@link io.tunabytes.Overwrite} methods.
  */
 public class OverwriteEditor implements MixinsEditor {
 
-    @SneakyThrows @Override public void edit(ClassNode classNode, MixinInfo info) {
+    @SneakyThrows @Override public void edit(ClassNode clazzToMixin, MixinInfo info) {
         if (info.isMixinEnum()) return;
-        for (MixinField field : info.getFields()) {
+        for (MixinField field : info.getMixinFields()) {
             if (field.isMirror()) continue;
-            classNode.fields.add(field.getNode());
+            clazzToMixin.fields.add(field.getNode());
         }
-        for (MixinMethod method : info.getMethods()) {
-            if (method.isInject()) continue;
-            if (method.isMirror()) continue;
-            if (method.getName().equals("<init>")) continue;
-            if (method.isOverwrite()) {
-                MethodNode node = method.getMethodNode();
-                if ((node.access & ACC_ABSTRACT) != 0) {
-                    throw new IllegalArgumentException("@Overwrite cannot be used on abstract methods! (" + node.name + " in " + info.getMixinName() + ")");
-                }
-                MethodNode underlying = classNode.methods.stream().filter(c -> c.name.equals(method.getOverwrittenName()) && c.desc.equals(node.desc))
-                        .findFirst().orElseThrow(() -> new NoSuchMethodException(method.getOverwrittenName()));
-                underlying.instructions = new InsnList();
-                underlying.instructions.add(node.instructions);
-                underlying.tryCatchBlocks = node.tryCatchBlocks;
-                underlying.localVariables = node.localVariables;
-                underlying.maxLocals = node.maxLocals;
-                underlying.exceptions = node.exceptions;
-                underlying.attrs = node.attrs;
-                underlying.maxStack = node.maxStack;
+        for (MixinMethod mixinMethod : info.getMixinMethods()) {
+            if (mixinMethod.isInject()) continue;
+            if (mixinMethod.isMirror()) continue;
+            if (mixinMethod.getTargetMethodName().equals("<init>")) continue;
+            if (mixinMethod.isOverwrite()) {
+                MethodNode mixinMethodNode = mixinMethod.getMethodNode();
+                MethodNode methodToMixin = ClassNarrower.tryNarrow(clazzToMixin, info, mixinMethod);
 
-                for (AbstractInsnNode instruction : underlying.instructions) {
-                    remapInstruction(classNode, info, instruction);
+                methodToMixin.instructions = new InsnList();
+                methodToMixin.instructions.add(mixinMethodNode.instructions);
+                methodToMixin.tryCatchBlocks = mixinMethodNode.tryCatchBlocks;
+                methodToMixin.localVariables = mixinMethodNode.localVariables;
+                methodToMixin.maxLocals = mixinMethodNode.maxLocals;
+                methodToMixin.exceptions = mixinMethodNode.exceptions;
+                methodToMixin.attrs = mixinMethodNode.attrs;
+                methodToMixin.maxStack = mixinMethodNode.maxStack;
+                methodToMixin.access = mixinMethodNode.access;
+
+                for (AbstractInsnNode instruction : methodToMixin.instructions) {
+                    remapInstruction(clazzToMixin, info, instruction);
                 }
             }
         }
