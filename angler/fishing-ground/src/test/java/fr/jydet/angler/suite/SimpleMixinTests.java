@@ -4,6 +4,7 @@ import fr.jydet.angler.State;
 import fr.jydet.angler.Utils;
 import fr.jydet.angler.mixintargets.ReturnTestPOJO;
 import fr.jydet.angler.mixintargets.SimplePOJO;
+import io.tunabytes.bytecode.InvalidMixinException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +28,35 @@ public class SimpleMixinTests {
     }
 
     /** BEGINNING INJECTION **/
+
+
+    @Test
+    public void test_injectBeforeWithoutLineNumber() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("InjectBeforeWithoutLineNumber.java"));
+        try {
+            launchMixins(cl);
+            Assert.fail("Mixin should create a runtime error when loading it !");
+        } catch (InvalidMixinException expected) { }
+    }
+
+    @Test
+    public void test_injectAfterWithoutLineNumber() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("InjectAfterWithoutLineNumber.java"));
+        try {
+            launchMixins(cl);
+            Assert.fail("Mixin should create a runtime error when loading it !");
+        } catch (InvalidMixinException expected) {
+        }
+    }
+
+    @Test
+    public void test_injectReplaceWithoutLineNumber() throws IOException {
+        URLClassLoader cl = compileAndLoad(getFilesFromMixinsTank("InjectReplaceWithoutLineNumber.java"));
+        try {
+            launchMixins(cl);
+            Assert.fail("Mixin should create a runtime error when loading it !");
+        } catch (InvalidMixinException expected) { }
+    }
 
     @Test
     public void test_injectBeginning_inEmptyMethod() throws IOException {

@@ -12,16 +12,16 @@ import org.objectweb.asm.tree.*;
  */
 public class AccessorEditor implements MixinsEditor {
 
-    @SneakyThrows @Override public void edit(ClassNode node, MixinInfo info) {
+    @SneakyThrows @Override public void edit(ClassNode originalClassNode, MixinInfo info) {
         if (info.isMixinInterface()) {
-            node.interfaces.add(info.getMixinInternalName());
-            for (MixinMethod method : info.getMethods()) {
+            originalClassNode.interfaces.add(info.getMixinInternalName());
+            for (MixinMethod method : info.getMixinMethods()) {
                 if (!method.isAccessor()) continue;
                 if ((method.getMethodNode().access & ACC_ABSTRACT) == 0) {
-                    throw new IllegalArgumentException("@Accessor cannot be used on non-abstract methods! (" + node.name + " in " + info.getMixinName() + ")");
+                    throw new IllegalArgumentException("@Accessor cannot be used on non-abstract methods! (" + originalClassNode.name + " in " + info.getMixinName() + ")");
                 }
                 MethodNode n = method.getMethodNode();
-                MethodNode impl = new MethodNode(ACC_PUBLIC, method.getName(), method.getDescriptor().getDescriptor(), n.signature, n.exceptions.toArray(new String[0]));
+                MethodNode impl = new MethodNode(ACC_PUBLIC, method.getTargetMethodName(), method.getDescriptor().getDescriptor(), n.signature, n.exceptions.toArray(new String[0]));
                 Type targetType = Type.getMethodType(n.desc);
                 Type returnType = targetType.getReturnType();
                 Type[] arguments = targetType.getArgumentTypes();
@@ -29,7 +29,7 @@ public class AccessorEditor implements MixinsEditor {
                     targetType = targetType.getReturnType();
                 } else if (method.getType() == CallType.SET) {
                     if (arguments.length != 1) {
-                        throw new IllegalArgumentException("Accessor setter must have exactly one argument! (" + node.name + " in " + info.getMixinName() + ")");
+                        throw new IllegalArgumentException("Accessor setter must have exactly one argument! (" + originalClassNode.name + " in " + info.getMixinName() + ")");
                     }
                     targetType = arguments[0];
                 }
@@ -37,17 +37,17 @@ public class AccessorEditor implements MixinsEditor {
                 boolean isStatic;
                 switch (method.getType()) {
                     case GET:
-                        FieldNode accessed = node.fields.stream().filter(c -> c.name.equals(method.getAccessedProperty())).findFirst()
+                        FieldNode accessed = originalClassNode.fields.stream().filter(c -> c.name.equals(method.getAccessedProperty())).findFirst()
                                 .orElseThrow(() -> new NoSuchFieldException(method.getAccessedProperty()));
                         isStatic = (accessed.access & ACC_STATIC) != 0;
                         if (!isStatic) {
                             impl.instructions.add(new VarInsnNode(ALOAD, 0));
                         }
-                        impl.instructions.add(new FieldInsnNode(isStatic ? GETSTATIC : GETFIELD, node.name, method.getAccessedProperty(), targetType.getDescriptor()));
+                        impl.instructions.add(new FieldInsnNode(isStatic ? GETSTATIC : GETFIELD, originalClassNode.name, method.getAccessedProperty(), targetType.getDescriptor()));
                         impl.instructions.add(new InsnNode(targetType.getOpcode(IRETURN)));
                         break;
                     case SET:
-                        accessed = node.fields.stream().filter(c -> c.name.equals(method.getAccessedProperty())).findFirst()
+                        accessed = originalClassNode.fields.stream().filter(c -> c.name.equals(method.getAccessedProperty())).findFirst()
                                 .orElseThrow(() -> new NoSuchFieldException(method.getAccessedProperty()));
                         isStatic = (accessed.access & ACC_STATIC) != 0;
                         if (!isStatic)
@@ -55,11 +55,11 @@ public class AccessorEditor implements MixinsEditor {
                         if ((accessed.access & ACC_FINAL) != 0)
                             accessed.access &= ~ACC_FINAL;
                         impl.instructions.add(new VarInsnNode(targetType.getOpcode(ILOAD), getArgIndex(0, isStatic, arguments)));
-                        impl.instructions.add(new FieldInsnNode(PUTFIELD, node.name, method.getAccessedProperty(), targetType.getDescriptor()));
+                        impl.instructions.add(new FieldInsnNode(PUTFIELD, originalClassNode.name, method.getAccessedProperty(), targetType.getDescriptor()));
                         impl.instructions.add(new InsnNode(returnType.getOpcode(IRETURN)));
                         break;
                     case INVOKE:
-                        MethodNode accessedMethod = node.methods.stream().filter(m -> m.name.equals(method.getAccessedProperty()) && m.desc.equals(n.desc))
+                        MethodNode accessedMethod = originalClassNode.methods.stream().filter(m -> m.name.equals(method.getAccessedProperty()) && m.desc.equals(n.desc))
                                 .findFirst().orElseThrow(() -> new NoSuchMethodException(method.getAccessedProperty()));
                         isStatic = (accessedMethod.access & ACC_STATIC) != 0;
                         if (!isStatic)
@@ -68,20 +68,20 @@ public class AccessorEditor implements MixinsEditor {
                             impl.instructions.add(new VarInsnNode(arguments[i].getOpcode(ILOAD), getArgIndex(i, isStatic, arguments)));
                         }
                         if (isStatic)
-                            impl.instructions.add(new MethodInsnNode(INVOKESTATIC, node.name, method.getAccessedProperty(), method.getDescriptor().getDescriptor()));
+                            impl.instructions.add(new MethodInsnNode(INVOKESTATIC, originalClassNode.name, method.getAccessedProperty(), method.getDescriptor().getDescriptor()));
                         else {
                             if (method.isPrivate() || accessedMethod.name.endsWith("init>"))
-                                impl.instructions.add(new MethodInsnNode(INVOKESPECIAL, node.name, method.getAccessedProperty(), method.getDescriptor().getDescriptor()));
+                                impl.instructions.add(new MethodInsnNode(INVOKESPECIAL, originalClassNode.name, method.getAccessedProperty(), method.getDescriptor().getDescriptor()));
                             else
-                                impl.instructions.add(new MethodInsnNode(INVOKEVIRTUAL, node.name, method.getAccessedProperty(), method.getDescriptor().getDescriptor()));
+                                impl.instructions.add(new MethodInsnNode(INVOKEVIRTUAL, originalClassNode.name, method.getAccessedProperty(), method.getDescriptor().getDescriptor()));
                         }
                         impl.instructions.add(new InsnNode(targetType.getReturnType().getOpcode(IRETURN)));
                         break;
                 }
-                node.methods.add(impl);
+                originalClassNode.methods.add(impl);
             }
         } else {
-            node.interfaces.addAll(info.getInterfacesToAdd());
+            originalClassNode.interfaces.addAll(info.getInterfacesToAdd());
         }
     }
 

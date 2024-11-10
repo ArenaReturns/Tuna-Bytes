@@ -5,19 +5,9 @@ import io.tunabytes.bytecode.ClassNarrower;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
 import lombok.SneakyThrows;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.LineNumberNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A mixins editor for processing {@link io.tunabytes.Inject} methods.
@@ -25,19 +15,19 @@ import java.util.Map;
 public class InjectionEditor implements MixinsEditor {
 
     @SneakyThrows @Override 
-    public void edit(ClassNode classNode, MixinInfo info) {
-        for (MixinMethod method : info.getMethods()) {
+    public void edit(ClassNode originalClassNode, MixinInfo info) {
+        for (MixinMethod method : info.getMixinMethods()) {
             if (!method.isInject()) continue;
             if ((method.getMethodNode().access & ACC_ABSTRACT) != 0) {
                 throw new IllegalArgumentException("@Inject cannot be used on abstract methods! (" + method.getMethodNode().name + " in " + info.getMixinName() + ")");
             }
             At at = method.getInjectAt();
-            int line = method.getInjectLine();
-            MethodNode targetMethod = ClassNarrower.tryNarrow(classNode, info, method);
+            int injectLine = method.getInjectLine();
+            MethodNode targetMethod = ClassNarrower.tryNarrow(originalClassNode, info, method);
 
             InsnList list = method.getMethodNode().instructions;
             for (AbstractInsnNode instruction : list) {
-                remapInstruction(classNode, info, instruction);
+                remapInstruction(originalClassNode, info, instruction);
             }
 
             AbstractInsnNode lastInjectedReturn = null;
@@ -83,7 +73,7 @@ public class InjectionEditor implements MixinsEditor {
                 for (AbstractInsnNode insnNode : targetMethod.instructions) {
                     if (!(insnNode instanceof LineNumberNode)) continue;
                     int currentLine = ((LineNumberNode) insnNode).line;
-                    if (currentLine == line) {
+                    if (currentLine == injectLine) {
                         if (insnNode.getPrevious() instanceof LabelNode) {
                             insnNode = insnNode.getPrevious();
                         }
@@ -100,7 +90,7 @@ public class InjectionEditor implements MixinsEditor {
                 for (AbstractInsnNode insnNode : targetMethod.instructions) {
                     if (!(insnNode instanceof LineNumberNode)) continue;
                     int currentLine = ((LineNumberNode) insnNode).line;
-                    if (currentLine == line) {
+                    if (currentLine == injectLine) {
                         int manualBacktrack = 0;
                         while (manualBacktrack < method.getManualInstructionSkip()) {
                             insnNode = insnNode.getNext();
@@ -123,7 +113,7 @@ public class InjectionEditor implements MixinsEditor {
                     first = insnNode;
 
                     int currentLine = ((LineNumberNode) insnNode).line;
-                    if (currentLine == line) {
+                    if (currentLine == injectLine) {
                         while (iterator.hasNext()) {
                             insnNode = iterator.next();
                             if (!(insnNode instanceof LineNumberNode)) {

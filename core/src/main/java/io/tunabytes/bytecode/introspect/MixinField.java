@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.ToString;
 import org.objectweb.asm.tree.FieldNode;
 
-import java.util.Set;
-
 @Getter
 @ToString
 @AllArgsConstructor
@@ -15,7 +13,7 @@ public final class MixinField {
     private final int access;
     private final boolean mirror;
     private final boolean definalize;
-    private final String name, desc;
+    private final String targetFieldName, desc;
     private final boolean remapped;
     private final String enumField;
     private final String type;

@@ -23,7 +23,7 @@ public class EnumEditor implements MixinsEditor {
     }
 
     @Override
-    public void edit(ClassNode node, MixinInfo info) {
+    public void edit(ClassNode originalClassNode, MixinInfo info) {
         if (! info.isMixinEnum()) return;
         Map<String, EnumOP> enumsValues = new HashMap<>();
 
@@ -31,51 +31,51 @@ public class EnumEditor implements MixinsEditor {
             enumsValues.put(deletedEnumValue, EnumOP.DELETE);
         }
 
-        for (MixinField field : info.getFields()) {
+        for (MixinField field : info.getMixinFields()) {
             if (field.isMirror()) continue;
             //don't add gcc generated field
-            if (info.isMixinEnum() && field.getName().equals("$VALUES")) {
+            if (info.isMixinEnum() && field.getTargetFieldName().equals("$VALUES")) {
                 continue;
             }
 
             //dont add fake enum field, we only care about the <clinit>
             if (field.getEnumField() == null) {
-                String error = "Addition of field '" + field.getName() + "' in enum class '" + node.name + "' is not supported, did you forget @Mirror or @EnumOverwrite ?";
+                String error = "Addition of field '" + field.getTargetFieldName() + "' in enum class '" + originalClassNode.name + "' is not supported, did you forget @Mirror or @EnumOverwrite ?";
                 System.err.println(error);
                 throw new IllegalStateException(error);
             }
-            if (node.fields.stream().noneMatch(existingField -> existingField.name.equals(field.getName()))) {
-                if (enumsValues.containsKey(field.getName())) {
-                    String error = "Addition of field '" + field.getName() + "' in enum class '" + node.name +
-                            "' is not supported as an operation was already registered for it : '" + enumsValues.get(field.getName()) + "'";
+            if (originalClassNode.fields.stream().noneMatch(existingField -> existingField.name.equals(field.getTargetFieldName()))) {
+                if (enumsValues.containsKey(field.getTargetFieldName())) {
+                    String error = "Addition of field '" + field.getTargetFieldName() + "' in enum class '" + originalClassNode.name +
+                            "' is not supported as an operation was already registered for it : '" + enumsValues.get(field.getTargetFieldName()) + "'";
                     System.err.println(error);
                     throw new IllegalStateException(error);
                 }
-                enumsValues.put(field.getName(), EnumOP.ADD);
+                enumsValues.put(field.getTargetFieldName(), EnumOP.ADD);
                 FieldNode addedEnumValue = field.getNode();
                 addedEnumValue.access |= Opcodes.ACC_ENUM;
-                addedEnumValue.desc = 'L' + node.name + ';';
-                node.fields.add(addedEnumValue);
+                addedEnumValue.desc = 'L' + originalClassNode.name + ';';
+                originalClassNode.fields.add(addedEnumValue);
             } else {
-                if (enumsValues.containsKey(field.getName())) {
-                    String error = "Addition of field '" + field.getName() + "' in enum class '" + node.name +
-                            "' is not supported as an operation was already registered for it : '" + enumsValues.get(field.getName()) + "'";
+                if (enumsValues.containsKey(field.getTargetFieldName())) {
+                    String error = "Addition of field '" + field.getTargetFieldName() + "' in enum class '" + originalClassNode.name +
+                            "' is not supported as an operation was already registered for it : '" + enumsValues.get(field.getTargetFieldName()) + "'";
                     System.err.println(error);
                     throw new IllegalStateException(error);
                 }
-                enumsValues.put(field.getName(), EnumOP.REPLACE);
+                enumsValues.put(field.getTargetFieldName(), EnumOP.REPLACE);
             }
         }
 
-        node.fields.stream()
+        originalClassNode.fields.stream()
             .filter(fieldNode -> !enumsValues.containsKey(fieldNode.name))
             .filter(fieldNode -> (fieldNode.access & Opcodes.ACC_ENUM) == Opcodes.ACC_ENUM)
             .forEach(fieldNode -> enumsValues.put(fieldNode.name, EnumOP.KEEP));
 
         boolean enumConstructorFound = false;
 
-        for (MixinMethod method : info.getMethods()) {
-            if (method.getName().equals("<init>")) {
+        for (MixinMethod method : info.getMixinMethods()) {
+            if (method.getTargetMethodName().equals("<init>")) {
                 Type[] argumentTypes = Type.getArgumentTypes(method.getRealDescriptor());
                 if (argumentTypes.length > 2 &&
                         argumentTypes[1].getClassName().equals("int") &&
@@ -83,7 +83,7 @@ public class EnumEditor implements MixinsEditor {
                     enumConstructorFound = true;
                 }
             } else
-            if (method.getName().equals("<clinit>")) {
+            if (method.getTargetMethodName().equals("<clinit>")) {
                 MethodNode mixinClinit = method.getMethodNode();
 
                 AbstractInsnNode last = mixinClinit.instructions.getLast();
@@ -93,10 +93,10 @@ public class EnumEditor implements MixinsEditor {
                     throw new IllegalStateException("Was excepting a RETURN as last instruction of " + info.getMixinInternalName() + "'s <clinit> !");
                 }
 
-                MethodNode targetClinit = node.methods.stream()
+                MethodNode targetClinit = originalClassNode.methods.stream()
                         .filter(m -> m.name.equals("<clinit>"))
                         .findAny()
-                        .orElseThrow(() -> new IllegalStateException("No <clinit> method found in target enum " + node.name));
+                        .orElseThrow(() -> new IllegalStateException("No <clinit> method found in target enum " + originalClassNode.name));
 
                 InsnList targetClinitInstructions = targetClinit.instructions;
 
@@ -106,11 +106,11 @@ public class EnumEditor implements MixinsEditor {
 
                 while (true) {
                     if (targetClinitLast == null) {
-                        throw new IllegalStateException("No init array instruction found in <clinit> of " + node.name);
+                        throw new IllegalStateException("No init array instruction found in <clinit> of " + originalClassNode.name);
                     }
                     if (targetClinitLast instanceof TypeInsnNode) {
                         TypeInsnNode typeInsnNode = (TypeInsnNode) targetClinitLast;
-                        if (typeInsnNode.getOpcode() == Opcodes.ANEWARRAY && typeInsnNode.desc.equals(node.name)) {
+                        if (typeInsnNode.getOpcode() == Opcodes.ANEWARRAY && typeInsnNode.desc.equals(originalClassNode.name)) {
                             injectionPoint = typeInsnNode;
                             break;
                         }
@@ -169,16 +169,16 @@ public class EnumEditor implements MixinsEditor {
 
                 targetClinitInstructions.insert(previous, mixinClinit.instructions);
 
-                generateValuesCreation(targetClinit, node.name, new ArrayList<>(enumsValues.keySet()),
-                        node.fields.stream()
+                generateValuesCreation(targetClinit, originalClassNode.name, new ArrayList<>(enumsValues.keySet()),
+                        originalClassNode.fields.stream()
                                 .filter(fieldNode -> (fieldNode.access & Opcodes.ACC_SYNTHETIC) == Opcodes.ACC_SYNTHETIC)
                                 .map(fieldNode -> fieldNode.name)
                                 .filter(name -> name.contains("$"))
                                 .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("No synthetic field found for enum " + node.name + "! Are you sure this is an enum ??")));
+                        .orElseThrow(() -> new IllegalStateException("No synthetic field found for enum " + originalClassNode.name + "! Are you sure this is an enum ??")));
 
                 for (AbstractInsnNode instruction : targetClinit.instructions) {
-                    remapInstruction(node, info, instruction);
+                    remapInstruction(originalClassNode, info, instruction);
                 }
             }
         }

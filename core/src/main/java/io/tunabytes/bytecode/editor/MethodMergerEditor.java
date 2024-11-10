@@ -16,20 +16,20 @@ public class MethodMergerEditor implements MixinsEditor {
 
     private static final Set<String> IGNORED_ENUM_METHODS = new HashSet<>(Arrays.asList("values", "valueOf", "<init>", "<clinit>"));
 
-    @Override public void edit(ClassNode classNode, MixinInfo info) {
-        for (MixinMethod method : info.getMethods()) {
+    @Override public void edit(ClassNode originalClassNode, MixinInfo info) {
+        for (MixinMethod method : info.getMixinMethods()) {
             if (method.isAccessor()) continue;
             if (method.isInject()) continue;
             if (method.isMirror()) continue;
             if (info.isMixinEnum()) {
-                if (IGNORED_ENUM_METHODS.contains(method.getName())) {
+                if (IGNORED_ENUM_METHODS.contains(method.getTargetMethodName())) {
                     continue;
                 }
             }
             //merge static initializer
             // inject no-args constructors into each constructor of the mixed class
-            if (method.getName().equals("<init>") || method.getName().equals("<clinit>")) {
-                merge(classNode, info, method, method.getName());
+            if (method.getTargetMethodName().equals("<init>") || method.getTargetMethodName().equals("<clinit>")) {
+                merge(originalClassNode, info, method, method.getTargetMethodName());
                 continue;
             }
             if (method.isOverwrite() || method.isRewrite()) continue;
@@ -39,9 +39,9 @@ public class MethodMergerEditor implements MixinsEditor {
             underlying.instructions = new InsnList();
             underlying.instructions.add(mn.instructions);
             for (AbstractInsnNode instruction : underlying.instructions) {
-                remapInstruction(classNode, info, instruction);
+                remapInstruction(originalClassNode, info, instruction);
             }
-            classNode.methods.add(underlying);
+            originalClassNode.methods.add(underlying);
         }
     }
 

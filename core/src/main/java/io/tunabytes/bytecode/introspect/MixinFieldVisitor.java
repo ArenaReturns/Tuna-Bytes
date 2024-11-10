@@ -4,11 +4,11 @@ import io.tunabytes.ActualType;
 import io.tunabytes.Definalize;
 import io.tunabytes.EnumOverwrite;
 import io.tunabytes.Mirror;
-import org.objectweb.asm.*;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.FieldNode;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class MixinFieldVisitor extends FieldVisitor {
 
@@ -21,18 +21,21 @@ public class MixinFieldVisitor extends FieldVisitor {
     protected Type type;
     protected String name, desc, enumField;
 
-    public MixinFieldVisitor(FieldNode node) {
+    public MixinFieldVisitor(MixinClassVisitor mixinClassVisitor, FieldNode node) {
         super(Opcodes.ASM8, node);
         desc = node.desc;
         enumField = node.name;
     }
 
     @Override public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+        super.visitAnnotation(descriptor, visible);
         boolean mirrorAnn = MIRROR.getDescriptor().equals(descriptor);
-        if (mirrorAnn)
+        if (mirrorAnn) {
             mirror = true;
-        if (DEFINALIZE.getDescriptor().equals(descriptor))
+        }
+        if (DEFINALIZE.getDescriptor().equals(descriptor)) {
             definalize = true;
+        }
 
         boolean isEnum1 = ENUM_OVERWRITE_TYPE.equals(descriptor);
         if (isEnum1) {
@@ -41,6 +44,7 @@ public class MixinFieldVisitor extends FieldVisitor {
 
         return new AnnotationVisitor(Opcodes.ASM8) {
             @Override public void visit(String name, Object value) {
+                super.visit(name, value);
                 if (ACTUAL_TYPE.equals(descriptor)) {
                     remapped = true;
                     desc = MixinMethodVisitor.fromActualType(desc, (String) value).getDescriptor();
@@ -53,13 +57,9 @@ public class MixinFieldVisitor extends FieldVisitor {
 
                 if (mirrorAnn && name.equals("value")) {
                     MixinFieldVisitor.this.name = (String) value;
+                    remapped = true;
                 }
             }
         };
     }
-
-    @Override public void visitAttribute(Attribute attribute) {
-        super.visitAttribute(attribute);
-    }
-
 }
