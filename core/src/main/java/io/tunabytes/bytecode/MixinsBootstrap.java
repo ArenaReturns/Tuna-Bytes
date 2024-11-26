@@ -94,8 +94,12 @@ public final class MixinsBootstrap {
             } else {
                 targetNode = writerEntry.node;
             }
-            for (MixinsEditor editor : editors) {
-                editor.edit(targetNode, info);
+            try {
+                for (MixinsEditor editor : editors) {
+                    editor.edit(targetNode, info);
+                }
+            } catch (Exception e) {
+                throw new IllegalStateException("Unable to apply mixin modifications for class {}: " + targetNode.name, e);
             }
         }
         for (Entry<String, TargetedMixin> writerEntry : writers.entrySet()) {

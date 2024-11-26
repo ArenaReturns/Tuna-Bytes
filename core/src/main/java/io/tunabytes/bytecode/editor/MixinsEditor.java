@@ -55,7 +55,7 @@ public interface MixinsEditor extends Opcodes {
                     MixinField mixinField = info.getMixinFields().stream()
                             .filter(mf -> mf.getType().equals(insn.desc) && mf.getNode().name.equals(insn.name))
                             .findFirst()
-                            .orElseThrow(() -> new InvalidMixinException("Couldn't found remap target of an access to " + insn + " from mixin " + info.getMixinName()));
+                            .orElseThrow(() -> new InvalidMixinException("Couldn't found remap target of an access to " + insn.desc + " " + insn.name + " from mixin " + info.getMixinName()));
                     if (mixinField.isRemapped()) {
                         insn.desc = mixinField.getDesc();
                     }
@@ -82,7 +82,7 @@ public interface MixinsEditor extends Opcodes {
                         .filter(mm -> mm.getRealDescriptor().equals(insn.desc) &&
                                 mm.getMethodNode().name.equals(insn.name))
                         .findFirst()
-                        .orElseThrow(() -> new InvalidMixinException("Couldn't found remap target of a call to " + insn + " from mixin " + info.getMixinName()));
+                        .orElseThrow(() -> new InvalidMixinException("Couldn't found remap target of a call to " + insn.name + "." + insn.desc + " from mixin " + info.getMixinName()));
                 if (mixinMethod.isRequireTypeRemapping()) {
                     insn.desc = mixinMethod.getRealDescriptor();
                 }

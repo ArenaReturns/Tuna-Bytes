@@ -28,6 +28,7 @@ public final class MixinMethod {
     private final String accessedProperty; // or accessed method
     private final MethodNode methodNode;
     private final CallType type;
+    private final boolean localCapture;
 
     public enum CallType {
         INVOKE,

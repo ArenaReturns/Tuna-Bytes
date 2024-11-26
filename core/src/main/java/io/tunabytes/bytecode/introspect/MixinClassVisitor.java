@@ -112,7 +112,8 @@ public class MixinClassVisitor extends ClassVisitor {
                         runtimeRewriter,
                         accessorName == null ? getActualName(visitedMethodName) : accessorName,
                         mixinMethodNode,
-                        type == null ? CallType.INVOKE : type
+                        type == null ? CallType.INVOKE : type,
+                        localCapture
                 ));
             }
         };
