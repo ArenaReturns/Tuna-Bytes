@@ -99,7 +99,7 @@ public final class MixinsBootstrap {
                     editor.edit(targetNode, info);
                 }
             } catch (Exception e) {
-                throw new IllegalStateException("Unable to apply mixin modifications for class {}: " + targetNode.name, e);
+                throw new IllegalStateException("Unable to apply mixin " + mixinEntry.getMixinClass() + " modifications for class " + targetNode.name + ": ", e);
             }
         }
         for (Entry<String, TargetedMixin> writerEntry : writers.entrySet()) {

@@ -161,7 +161,7 @@ public class MixinMethodVisitor extends MethodVisitor {
                             break;
                         }
                         case "localCapture": {
-                            localCapture = (int) value;
+                            localCapture = (boolean) value;
                             break;
                         }
                     }
