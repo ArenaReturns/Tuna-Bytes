@@ -1,6 +1,6 @@
 package io.tunabytes.bytecode.editor;
 
-import io.tunabytes.bytecode.ClassNarrower;
+import io.tunabytes.bytecode.MethodNarrower;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
 import lombok.SneakyThrows;
@@ -18,7 +18,7 @@ public class RewriteEditor implements MixinsEditor {
   public void edit(ClassNode originalClassNode, MixinInfo info) {
       for (MixinMethod mixinMethod : info.getMixinMethods()) {
         if (!mixinMethod.isRewrite()) continue;
-        MethodNode underlying = ClassNarrower.tryNarrow(originalClassNode, info, mixinMethod);
+        MethodNode underlying = MethodNarrower.tryNarrow(originalClassNode, info, mixinMethod);
         
         try {
           mixinMethod.getRewritter().newInstance().rewrite(underlying);

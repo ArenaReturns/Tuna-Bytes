@@ -1,6 +1,6 @@
 package io.tunabytes.bytecode.editor;
 
-import io.tunabytes.bytecode.ClassNarrower;
+import io.tunabytes.bytecode.MethodNarrower;
 import io.tunabytes.bytecode.introspect.MixinField;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
@@ -27,7 +27,7 @@ public class OverwriteEditor implements MixinsEditor {
             if (mixinMethod.getTargetMethodName().equals("<init>")) continue;
             if (mixinMethod.isOverwrite()) {
                 MethodNode mixinMethodNode = mixinMethod.getMethodNode();
-                MethodNode methodToMixin = ClassNarrower.tryNarrow(clazzToMixin, info, mixinMethod);
+                MethodNode methodToMixin = MethodNarrower.tryNarrow(clazzToMixin, info, mixinMethod);
 
                 methodToMixin.instructions = new InsnList();
                 methodToMixin.instructions.add(mixinMethodNode.instructions);

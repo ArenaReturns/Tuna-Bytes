@@ -3,6 +3,7 @@ package io.tunabytes.bytecode.introspect;
 import io.tunabytes.*;
 import io.tunabytes.Inject.At;
 import io.tunabytes.Rewrite.Rewritter;
+import io.tunabytes.SwitchMerger;
 import io.tunabytes.bytecode.InvalidMixinException;
 import io.tunabytes.bytecode.introspect.MixinMethod.CallType;
 import org.objectweb.asm.AnnotationVisitor;
@@ -23,12 +24,13 @@ public class MixinMethodVisitor extends MethodVisitor {
     private static final String MIRROR = Type.getDescriptor(Mirror.class);
     private static final String DEFINALIZE = Type.getDescriptor(Definalize.class);
     private static final String ACTUAL_TYPE = Type.getDescriptor(ActualType.class);
+    private static final String SWITCH_TYPE = Type.getDescriptor(SwitchMerger.class);
 
     private final MixinClassVisitor mixinClassVisitor;
     protected MethodNode mixinMethodNode;
     protected Type returnType;
     protected Type[] argumentTypes;
-    protected boolean overwrite, inject, accessor, mirror, definalize, requireTypeRemapping, keepLastReturn, rewrite, forceLowerCase = true;
+    protected boolean overwrite, inject, accessor, mirror, definalize, requireTypeRemapping, keepLastReturn, rewrite, forceLowerCase = true, switchEditor;
     protected String targetMethodName;
     protected Class<? extends Rewritter> runtimeRewriter;
     protected String accessorName;
@@ -38,6 +40,8 @@ public class MixinMethodVisitor extends MethodVisitor {
     protected At injectAt;
     protected CallType type;
     protected int manualInstructionSkip = 0;
+    protected int switchOrdinal = 0;
+    private int[] removeBranches = new int[0];
 
     public MixinMethodVisitor(MixinClassVisitor mixinClassVisitor, MethodNode node) {
         super(Opcodes.ASM8, node);
@@ -90,6 +94,7 @@ public class MixinMethodVisitor extends MethodVisitor {
         boolean visitingInject = INJECT.equals(descriptor);
         boolean visitingMirror = MIRROR.equals(descriptor);
         boolean visitingActualType = ACTUAL_TYPE.equals(descriptor);
+        boolean visitingSwitch = SWITCH_TYPE.equals(descriptor);
         if (visitingRewrite) {
             rewrite = true;
         }
@@ -105,6 +110,10 @@ public class MixinMethodVisitor extends MethodVisitor {
         if (visitingMirror) {
             mirror = true;
         }
+        if (visitingSwitch) {
+            switchEditor = true;
+        }
+        
         if (DEFINALIZE.equals(descriptor)) {
             definalize = true;
         }
@@ -122,7 +131,7 @@ public class MixinMethodVisitor extends MethodVisitor {
                             break;
                     }
                 }
-                if ((visitingRewrite || visitingOverwrite || visitingMirror) && name.equals("value")) {
+                if ((visitingRewrite || visitingOverwrite || visitingMirror || visitingSwitch) && name.equals("value")) {
                     targetMethodName = (String) value;
                 }
                 if (visitingRewrite && name.equals("runtimeRewriter")) {
@@ -132,6 +141,13 @@ public class MixinMethodVisitor extends MethodVisitor {
                     requireTypeRemapping = true;
                     String rtype = returnType.getDescriptor();
                     returnType = fromActualType(rtype, (String) value);
+                }
+                if (visitingSwitch) {
+                    if (name.equals("removeBranches")) {
+                        removeBranches = (int[]) value;
+                    } else if (name.equals("switchOrdinal")) {
+                        switchOrdinal = (int) value;
+                    }
                 }
                 if (visitingInject) {
                     switch (name) {
@@ -203,6 +219,9 @@ public class MixinMethodVisitor extends MethodVisitor {
                 }
                 if (rewrite && (mixinMethodNode.access & ACC_ABSTRACT) == 0) {
                     throw new InvalidMixinException("@Rewrite must be used on abstract mixin methods! at " + getErrorLocation());
+                }
+                if (switchEditor && (mixinMethodNode.access & ACC_ABSTRACT) == 0 && removeBranches.length == 0) {
+                    throw new InvalidMixinException("@SwitchMerger must be used on abstract mixin methods only to remove branches (use 'removeBranch' parameter)! at " + getErrorLocation());
                 }
             }
         };

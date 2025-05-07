@@ -73,6 +73,7 @@ public final class MixinsBootstrap {
         editors.add(new OverwriteEditor());
         editors.add(new RewriteEditor());
         editors.add(new AccessorEditor());
+        editors.add(new SwitchEditor());
         editors.add(new InjectionEditor());
         editors.add(new MethodMergerEditor());
         MixinsConfig config = new MixinsConfig(classLoaders);

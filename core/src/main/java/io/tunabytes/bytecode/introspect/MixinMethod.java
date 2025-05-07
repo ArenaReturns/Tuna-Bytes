@@ -22,8 +22,9 @@ public final class MixinMethod {
     private final int injectLineReplaceEnd;
     private final int manualInstructionSkip;
     private final int lastParameterArgIndex;
+    private final int switchOrdinal;
     private final At injectAt;
-    private final boolean overwrite, rewrite, accessor, inject, mirror, definalize, requireTypeRemapping, keepLastReturn;
+    private final boolean overwrite, rewrite, accessor, inject, mirror, definalize, requireTypeRemapping, keepLastReturn, switchEditor;
     private final Class<? extends Rewritter> rewritter;
     private final String accessedProperty; // or accessed method
     private final MethodNode methodNode;

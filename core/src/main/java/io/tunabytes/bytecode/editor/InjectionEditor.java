@@ -1,7 +1,7 @@
 package io.tunabytes.bytecode.editor;
 
 import io.tunabytes.Inject.At;
-import io.tunabytes.bytecode.ClassNarrower;
+import io.tunabytes.bytecode.MethodNarrower;
 import io.tunabytes.bytecode.introspect.MixinInfo;
 import io.tunabytes.bytecode.introspect.MixinMethod;
 import lombok.SneakyThrows;
@@ -23,7 +23,7 @@ public class InjectionEditor implements MixinsEditor {
             }
             At at = method.getInjectAt();
             int injectLine = method.getInjectLine();
-            MethodNode targetMethod = ClassNarrower.tryNarrow(originalClassNode, info, method);
+            MethodNode targetMethod = MethodNarrower.tryNarrow(originalClassNode, info, method);
 
             InsnList list = method.getMethodNode().instructions;
             for (AbstractInsnNode instruction : list) {

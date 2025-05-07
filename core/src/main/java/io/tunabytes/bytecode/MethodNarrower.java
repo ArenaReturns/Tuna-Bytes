@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 /**
  * Utility class for narrowing down the target method of a mixin.
  */
-public final class ClassNarrower {
+public final class MethodNarrower {
 
     /**
      * Set this to false to log the narrowing process for all mixins, not just the ones that fail.
