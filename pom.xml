@@ -7,14 +7,14 @@
     <groupId>com.arenareturns</groupId>
     <artifactId>tuna-bytes</artifactId>
     <packaging>pom</packaging>
-    <version>1.7.11-SNAPSHOT</version>
+    <version>1.7.12-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         
         <lombok.version>1.18.26</lombok.version>
-        <base.version>1.7.11-SNAPSHOT</base.version>
+        <base.version>1.7.12-SNAPSHOT</base.version>
     </properties>
 
     <modules>

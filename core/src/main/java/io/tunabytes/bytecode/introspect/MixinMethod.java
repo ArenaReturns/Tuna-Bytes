@@ -2,7 +2,6 @@ package io.tunabytes.bytecode.introspect;
 
 import io.tunabytes.Inject.At;
 import io.tunabytes.Rewrite.Rewritter;
-import io.tunabytes.bytecode.InvalidMixinException;
 import lombok.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -30,6 +29,7 @@ public final class MixinMethod {
     private final MethodNode methodNode;
     private final CallType type;
     private final boolean localCapture;
+    private final boolean privateClassAccessor;
 
     private final List<LdcSwapInfo> ldcSwaps;
 
