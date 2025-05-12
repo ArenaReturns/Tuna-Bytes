@@ -38,6 +38,7 @@ public class MixinMethodVisitor extends MethodVisitor {
     protected At injectAt;
     protected CallType type;
     protected int manualInstructionSkip = 0;
+    protected boolean localCapture = false;
 
     public MixinMethodVisitor(MixinClassVisitor mixinClassVisitor, MethodNode node) {
         super(Opcodes.ASM8, node);
@@ -157,6 +158,10 @@ public class MixinMethodVisitor extends MethodVisitor {
                         }
                         case "manualInstructionSkip": {
                             manualInstructionSkip = (int) value;
+                            break;
+                        }
+                        case "localCapture": {
+                            localCapture = (boolean) value;
                             break;
                         }
                     }

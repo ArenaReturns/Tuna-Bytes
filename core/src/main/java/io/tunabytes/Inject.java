@@ -101,6 +101,14 @@ public @interface Inject {
     int manualInstructionSkip() default 0;
 
     /**
+     * Print the locals information of the mixins
+     * @return
+     * @deprecated WIP
+     */
+    @Deprecated()
+    boolean localsPrint() default false;
+
+    /**
      * Represents an injection point
      */
     enum At {
