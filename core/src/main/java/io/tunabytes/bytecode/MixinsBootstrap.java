@@ -69,6 +69,7 @@ public final class MixinsBootstrap {
         classLoaders.addAll(searchClassLoaders);
         List<MixinsEditor> editors = new ArrayList<>();
         editors.add(new DefinalizeEditor());
+        editors.add(new LDCSwapEditor());
         editors.add(new EnumEditor());
         editors.add(new OverwriteEditor());
         editors.add(new RewriteEditor());

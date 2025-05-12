@@ -11,7 +11,11 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.objectweb.asm.Opcodes.ACC_ABSTRACT;
+import static org.objectweb.asm.Opcodes.ASM8;
 
 public class MixinMethodVisitor extends MethodVisitor {
 
@@ -23,6 +27,8 @@ public class MixinMethodVisitor extends MethodVisitor {
     private static final String MIRROR = Type.getDescriptor(Mirror.class);
     private static final String DEFINALIZE = Type.getDescriptor(Definalize.class);
     private static final String ACTUAL_TYPE = Type.getDescriptor(ActualType.class);
+    private static final String LDC_SWAP = Type.getDescriptor(LdcSwap.class);
+    private static final String LDC_SWAPS = Type.getDescriptor(LdcSwap.LdcSwaps.class);
 
     private final MixinClassVisitor mixinClassVisitor;
     protected MethodNode mixinMethodNode;
@@ -39,6 +45,7 @@ public class MixinMethodVisitor extends MethodVisitor {
     protected CallType type;
     protected int manualInstructionSkip = 0;
     protected boolean localCapture = false;
+    protected List<MixinMethod.LdcSwapInfo> ldcSwapInfoList = new ArrayList<>();
 
     public MixinMethodVisitor(MixinClassVisitor mixinClassVisitor, MethodNode node) {
         super(Opcodes.ASM8, node);
@@ -84,13 +91,20 @@ public class MixinMethodVisitor extends MethodVisitor {
 
     @Override
     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-        super.visitAnnotation(descriptor, visible);
+//        super.visitAnnotation(descriptor, visible);
         boolean visitingRewrite = REWRITE.equals(descriptor);
         boolean visitingAccessor = ACCESSOR.equals(descriptor);
         boolean visitingOverwrite = OVERWRITE.equals(descriptor);
         boolean visitingInject = INJECT.equals(descriptor);
         boolean visitingMirror = MIRROR.equals(descriptor);
         boolean visitingActualType = ACTUAL_TYPE.equals(descriptor);
+        boolean visitingLdcSwap = LDC_SWAP.equals(descriptor);
+
+        final MixinMethod.LdcSwapInfo.LdcSwapInfoBuilder[] ldcSwapBuilder = new MixinMethod.LdcSwapInfo.LdcSwapInfoBuilder[] { null };
+        if (visitingLdcSwap) {
+            ldcSwapBuilder[0] = MixinMethod.LdcSwapInfo.builder();
+        }
+
         if (visitingRewrite) {
             rewrite = true;
         }
@@ -123,6 +137,28 @@ public class MixinMethodVisitor extends MethodVisitor {
                             break;
                     }
                 }
+                if (visitingLdcSwap) {
+                    switch (name) {
+                        case "method":
+                            String wantedMethod = (String) value;
+                            if (targetMethodName == null) {
+                                targetMethodName = wantedMethod;
+                            }
+                            break;
+                        case "targetLdc":
+                            ldcSwapBuilder[0].targetLdc((String) value);
+                            break;
+                        case "newLdc":
+                            ldcSwapBuilder[0].newLdc((String) value);
+                            break;
+                        case "ldcSkipped":
+                            ldcSwapBuilder[0].ldcSkipped((Integer) value);
+                            break;
+                        case "applyCount":
+                            ldcSwapBuilder[0].applyCount((Integer) value);
+                            break;
+                    }
+                }
                 if ((visitingRewrite || visitingOverwrite || visitingMirror) && name.equals("value")) {
                     targetMethodName = (String) value;
                 }
@@ -137,7 +173,9 @@ public class MixinMethodVisitor extends MethodVisitor {
                 if (visitingInject) {
                     switch (name) {
                         case "method": {
-                            targetMethodName = (String) value;
+                            if (targetMethodName == null) {
+                                targetMethodName = (String) value;
+                            }
                             break;
                         }
                         case "returnType": {
@@ -179,8 +217,72 @@ public class MixinMethodVisitor extends MethodVisitor {
             }
 
             @Override
+            public AnnotationVisitor visitArray(String name) {
+                return new AnnotationVisitor(ASM8, super.visitArray(name)) {
+                    @Override
+                    public AnnotationVisitor visitAnnotation(String name, String descriptor) {
+                        AnnotationVisitor delegate = super.visitAnnotation(name, descriptor);
+                        if (descriptor.equals(LDC_SWAP)) {
+                            return new AnnotationVisitor(ASM8, delegate) {
+
+                                @Override
+                                public void visit(String name, Object value) {
+                                    super.visit(name, value);
+                                    if (ldcSwapBuilder[0] == null) {
+                                        ldcSwapBuilder[0] = MixinMethod.LdcSwapInfo.builder();
+                                    }
+
+                                    switch (name) {
+                                        case "method":
+                                            String wantedMethod = (String) value;
+                                            if (targetMethodName == null) {
+                                                targetMethodName = wantedMethod;
+                                            }
+                                            break;
+                                        case "targetLdc":
+                                            ldcSwapBuilder[0].targetLdc((String) value);
+                                            break;
+                                        case "newLdc":
+                                            ldcSwapBuilder[0].newLdc((String) value);
+                                            break;
+                                        case "ldcSkipped":
+                                            ldcSwapBuilder[0].ldcSkipped((Integer) value);
+                                            break;
+                                        case "applyCount":
+                                            ldcSwapBuilder[0].applyCount((Integer) value);
+                                            break;
+                                    }
+                                }
+
+                                @Override
+                                public void visitEnd() {
+                                    super.visitEnd();
+                                    if (ldcSwapBuilder[0] != null) {
+                                        try {
+                                            ldcSwapInfoList.add(ldcSwapBuilder[0].build());
+                                        } catch (IllegalStateException e) {
+                                            throw new InvalidMixinException(e.getMessage() + " " + getErrorLocation());
+                                        }
+                                        ldcSwapBuilder[0] = MixinMethod.LdcSwapInfo.builder();
+                                    }
+                                }
+                            };
+                        }
+                        return delegate;
+                    }
+                };
+            }
+
+            @Override
             public void visitEnd() {
                 super.visitEnd();
+                if (visitingLdcSwap) {
+                    try {
+                        ldcSwapInfoList.add(ldcSwapBuilder[0].build());
+                    } catch (IllegalStateException e) {
+                        throw new InvalidMixinException(e.getMessage() + " " + getErrorLocation());
+                    }
+                }
                 if (inject) {
                     if (injectAt == At.BEFORE_LINE || injectAt == At.AFTER_LINE) {
                         if (injectLineReplaceEnd != Integer.MIN_VALUE) {
@@ -211,6 +313,11 @@ public class MixinMethodVisitor extends MethodVisitor {
                 }
             }
         };
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotationDefault() {
+        return super.visitAnnotationDefault();
     }
 
     private String getErrorLocation() {

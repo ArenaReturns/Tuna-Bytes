@@ -1,12 +1,14 @@
 package fr.jydet.angler.mixintargets;
 
 import fr.jydet.angler.InternalState;
+import fr.jydet.angler.State;
 import fr.jydet.angler.mixintargets.Message.Message1;
 import fr.jydet.angler.mixintargets.Message.Message2;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,6 +32,15 @@ public class SimplePOJO {
     public void printMethod() {
         System.out.println("print");
     }
+
+    public String ldcTest() {
+        return "error";
+    }
+
+    public String ldcTest2() {
+        return "error_" + ThreadLocalRandom.current().nextInt() + "_error";
+    }
+
 
     private int i = 0;
 
