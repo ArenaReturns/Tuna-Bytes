@@ -28,13 +28,15 @@ public class MixinMethodVisitor extends MethodVisitor {
     private static final String DEFINALIZE = Type.getDescriptor(Definalize.class);
     private static final String ACTUAL_TYPE = Type.getDescriptor(ActualType.class);
     private static final String LDC_SWAP = Type.getDescriptor(LdcSwap.class);
+    private static final String PRIVATE_CLASS_ACCESSOR = Type.getDescriptor(PrivateClassAccessor.class);
     private static final String LDC_SWAPS = Type.getDescriptor(LdcSwap.LdcSwaps.class);
 
     private final MixinClassVisitor mixinClassVisitor;
     protected MethodNode mixinMethodNode;
     protected Type returnType;
     protected Type[] argumentTypes;
-    protected boolean overwrite, inject, accessor, mirror, definalize, requireTypeRemapping, keepLastReturn, rewrite, forceLowerCase = true;
+    protected boolean overwrite, inject, accessor, mirror, definalize, requireTypeRemapping, keepLastReturn, rewrite, privateClassAccessor;
+    protected boolean forceLowerCase = true;
     protected String targetMethodName;
     protected Class<? extends Rewritter> runtimeRewriter;
     protected String accessorName;
@@ -99,12 +101,16 @@ public class MixinMethodVisitor extends MethodVisitor {
         boolean visitingMirror = MIRROR.equals(descriptor);
         boolean visitingActualType = ACTUAL_TYPE.equals(descriptor);
         boolean visitingLdcSwap = LDC_SWAP.equals(descriptor);
+        boolean visitingPrivateClassAccessor = PRIVATE_CLASS_ACCESSOR.equals(descriptor);
 
         final MixinMethod.LdcSwapInfo.LdcSwapInfoBuilder[] ldcSwapBuilder = new MixinMethod.LdcSwapInfo.LdcSwapInfoBuilder[] { null };
         if (visitingLdcSwap) {
             ldcSwapBuilder[0] = MixinMethod.LdcSwapInfo.builder();
         }
 
+        if (visitingPrivateClassAccessor) {
+            privateClassAccessor = true;
+        }
         if (visitingRewrite) {
             rewrite = true;
         }
@@ -158,6 +164,9 @@ public class MixinMethodVisitor extends MethodVisitor {
                             ldcSwapBuilder[0].applyCount((Integer) value);
                             break;
                     }
+                }
+                if (visitingPrivateClassAccessor && name.equals("value")) {
+                    accessorName = (String) value;
                 }
                 if ((visitingRewrite || visitingOverwrite || visitingMirror) && name.equals("value")) {
                     targetMethodName = (String) value;
@@ -276,6 +285,18 @@ public class MixinMethodVisitor extends MethodVisitor {
             @Override
             public void visitEnd() {
                 super.visitEnd();
+                boolean isAbstract = (mixinMethodNode.access & ACC_ABSTRACT) != 0;
+                if (visitingPrivateClassAccessor) {
+                    if (accessorName == null || accessorName.isEmpty()) {
+                        throw new InvalidMixinException("@PrivateClassAccessor should have a not empty value!" + getErrorLocation());
+                    }
+                    if (isAbstract) {
+                        throw new InvalidMixinException("@PrivateClassAccessor must be used on empty non-abstract mixin methods!" + getErrorLocation());
+                    }
+                    if (! Type.getType(Class.class).equals(returnType)) {
+                        throw new InvalidMixinException("@PrivateClassAccessor should be used on a method with a Class<?> return type!" + getErrorLocation());
+                    }
+                }
                 if (visitingLdcSwap) {
                     try {
                         ldcSwapInfoList.add(ldcSwapBuilder[0].build());
@@ -305,11 +326,11 @@ public class MixinMethodVisitor extends MethodVisitor {
                         }
                     }
                 }
-                if (overwrite && (mixinMethodNode.access & ACC_ABSTRACT) != 0) {
+                if (overwrite && isAbstract) {
                     throw new InvalidMixinException("@Overwrite cannot be used on abstract mixin methods!" + getErrorLocation());
                 }
-                if (rewrite && (mixinMethodNode.access & ACC_ABSTRACT) == 0) {
-                    throw new InvalidMixinException("@Rewrite must be used on abstract mixin methods! at " + getErrorLocation());
+                if (rewrite && !isAbstract) {
+                    throw new InvalidMixinException("@Rewrite must be used on abstract mixin methods!" + getErrorLocation());
                 }
             }
         };

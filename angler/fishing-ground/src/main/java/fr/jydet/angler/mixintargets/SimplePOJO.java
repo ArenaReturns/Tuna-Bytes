@@ -1,7 +1,6 @@
 package fr.jydet.angler.mixintargets;
 
 import fr.jydet.angler.InternalState;
-import fr.jydet.angler.State;
 import fr.jydet.angler.mixintargets.Message.Message1;
 import fr.jydet.angler.mixintargets.Message.Message2;
 import lombok.AllArgsConstructor;
@@ -10,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
 @AllArgsConstructor
@@ -115,6 +113,10 @@ public class SimplePOJO {
                 break;
             }
         }
+    }
+
+    public Class<?> fakeAccessor() {
+        return Boolean.class;
     }
 
 }

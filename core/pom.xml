@@ -7,13 +7,13 @@
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <lombok.version>1.18.26</lombok.version>
-        <base.version>1.7.11-SNAPSHOT</base.version>
+        <base.version>1.7.12-SNAPSHOT</base.version>
     </properties>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.arenareturns.tuna-bytes</groupId>
     <artifactId>core</artifactId>
-    <version>1.7.11-SNAPSHOT</version>
+    <version>1.7.12-SNAPSHOT</version>
 
     <description>ArenaReturns' fork of Tuna Bytes, an all-purpose mixins framework for Java bytecode manipulation at runtime, targeted at those with minimal understanding of the bytecode structure.</description>
     <url>https://github.com/ArenaReturns/Tuna-Bytes</url>
